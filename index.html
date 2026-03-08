@@ -3,33 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multiplication Quiz (3-12)</title>
+    <title>Multiplication Tracker (3-12)</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f0f4f8; }
-        .card { background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 400px; }
-        h1 { color: #2d3748; margin-bottom: 1.5rem; }
-        #question { font-size: 3rem; font-weight: bold; color: #4a5568; margin: 20px 0; }
-        input { font-size: 2rem; width: 100px; text-align: center; border: 2px solid #cbd5e0; border-radius: 8px; padding: 5px; margin-bottom: 20px; outline: none; }
-        input:focus { border-color: #4299e1; }
-        button { background: #4299e1; color: white; border: none; padding: 10px 25px; font-size: 1.2rem; border-radius: 8px; cursor: pointer; transition: 0.2s; }
-        button:hover { background: #3182ce; }
+        :root { --primary: #4a90e2; --success: #48bb78; --error: #f56565; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: #f7fafc; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        
+        /* Layout */
+        .container { display: flex; gap: 20px; padding: 20px; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 900px; }
+        
+        /* Quiz Card */
+        .card { background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; flex: 1; min-width: 300px; max-width: 400px; }
+        #question { font-size: 3.5rem; font-weight: bold; margin: 20px 0; color: #2d3748; }
+        input { font-size: 2rem; width: 120px; text-align: center; border: 2px solid #e2e8f0; border-radius: 10px; padding: 10px; margin-bottom: 20px; }
+        
+        /* Progress Sidebar */
+        .history-panel { background: white; padding: 1.5rem; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 250px; max-height: 500px; overflow-y: auto; }
+        .history-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #edf2f7; font-size: 0.9rem; }
+        .res-correct { color: var(--success); font-weight: bold; }
+        .res-wrong { color: var(--error); font-weight: bold; }
+        
+        button { background: var(--primary); color: white; border: none; padding: 12px 30px; font-size: 1.1rem; border-radius: 8px; cursor: pointer; width: 100%; }
+        button:hover { opacity: 0.9; }
         #feedback { margin-top: 15px; font-weight: bold; height: 24px; }
-        .correct { color: #48bb78; }
-        .wrong { color: #f56565; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>Math Quiz</h1>
-        <div id="question">? x ?</div>
-        <input type="number" id="answer" placeholder="Ans" autofocus>
-        <br>
-        <button onclick="checkAnswer()">Submit</button>
-        <div id="feedback"></div>
+
+    <h2 style="margin-top: 30px; color: #2d3748;">Multiplication Master (3-12)</h2>
+
+    <div class="container">
+        <div class="card">
+            <div id="question">? × ?</div>
+            <input type="number" id="answer" placeholder="?" autofocus>
+            <button onclick="checkAnswer()">Submit Answer</button>
+            <div id="feedback"></div>
+        </div>
+
+        <div class="history-panel">
+            <h3 style="margin-top: 0; font-size: 1.1rem;">Recent Progress (Last 20)</h3>
+            <div id="history-list">
+                <p style="color: #a0aec0; font-size: 0.8rem;">No attempts yet...</p>
+            </div>
+            <button onclick="clearHistory()" style="background: #edf2f7; color: #4a5568; margin-top: 15px; font-size: 0.8rem; padding: 5px;">Clear History</button>
+        </div>
     </div>
 
     <script>
         let num1, num2, correctAnswer;
+        let history = JSON.parse(localStorage.getItem('mathHistory')) || [];
 
         function generateQuestion() {
             num1 = Math.floor(Math.random() * 10) + 3; // 3 to 12
@@ -39,22 +60,65 @@
             document.getElementById('answer').value = '';
             document.getElementById('feedback').innerText = '';
             document.getElementById('answer').focus();
+            updateHistoryUI();
         }
 
         function checkAnswer() {
-            const userAnswer = parseInt(document.getElementById('answer').value);
+            const val = document.getElementById('answer').value;
+            if (val === "") return;
+
+            const userAnswer = parseInt(val);
+            const isCorrect = (userAnswer === correctAnswer);
+            
+            // Record result
+            const result = {
+                q: `${num1} × ${num2}`,
+                a: userAnswer,
+                correct: isCorrect
+            };
+
+            // Add to start of array and limit to 20
+            history.unshift(result);
+            if (history.length > 20) history.pop();
+
+            // Save and Update
+            localStorage.setItem('mathHistory', JSON.stringify(history));
+            
             const feedback = document.getElementById('feedback');
-            if (userAnswer === correctAnswer) {
-                feedback.innerText = "Correct! 🎉";
-                feedback.className = "correct";
-                setTimeout(generateQuestion, 1200);
+            if (isCorrect) {
+                feedback.innerText = "Correct! 🌟";
+                feedback.style.color = "var(--success)";
+                setTimeout(generateQuestion, 1000);
             } else {
-                feedback.innerText = "Try again! ❌";
-                feedback.className = "wrong";
+                feedback.innerText = `Incorrect. It was ${correctAnswer}`;
+                feedback.style.color = "var(--error)";
+                setTimeout(generateQuestion, 2000);
+            }
+            updateHistoryUI();
+        }
+
+        function updateHistoryUI() {
+            const list = document.getElementById('history-list');
+            if (history.length === 0) return;
+            
+            list.innerHTML = history.map(item => `
+                <div class="history-item">
+                    <span>${item.q} = ${item.a}</span>
+                    <span class="${item.correct ? 'res-correct' : 'res-wrong'}">
+                        ${item.correct ? '✓' : '✗'}
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        function clearHistory() {
+            if(confirm("Clear all progress?")) {
+                history = [];
+                localStorage.removeItem('mathHistory');
+                location.reload();
             }
         }
 
-        // Allow pressing "Enter" to submit
         document.getElementById('answer').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') checkAnswer();
         });
