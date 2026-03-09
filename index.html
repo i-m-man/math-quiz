@@ -21,7 +21,7 @@
 
     <div class="card" id="setup-screen">
         <h2>Advanced Multiplication</h2>
-        <p>You must complete <b>10 questions</b> to finish the set. If you make a mistake, you must try again until you get it right!</p>
+        <p>Complete <b>10 questions</b>. Mistakes mean you try again. <br><br><i>Note: You are being timed!</i> ⏱️</p>
         <input type="text" id="student-name" placeholder="Your Name" autofocus>
         <button onclick="startQuiz()">Start Challenge</button>
     </div>
@@ -30,7 +30,7 @@
         <div class="progress-text" id="progress-text">Question 1 of 10</div>
         
         <div class="stats">
-            <div>Total Attempts: <span id="stat-attempts">0</span></div>
+            <div>Total Tries: <span id="stat-attempts">0</span></div>
             <div>Accuracy: <span id="stat-score">100%</span></div>
         </div>
         
@@ -43,10 +43,10 @@
 
     <div class="card" id="end-screen" style="display: none;">
         <h2>Set Complete! 🎉</h2>
-        <p>You finished all 10 questions.</p>
-        <div class="stats" style="flex-direction: column; gap: 10px;">
-            <div>Total Tries: <span id="final-attempts">0</span></div>
-            <div>Final Accuracy: <span id="final-score">0%</span></div>
+        <div class="stats" style="flex-direction: column; gap: 10px; text-align: left;">
+            <div>⏱️ Time Taken: <span id="final-time" style="float: right;">0</span></div>
+            <div>🎯 Total Tries: <span id="final-attempts" style="float: right;">0</span></div>
+            <div>📊 Final Accuracy: <span id="final-score" style="float: right;">0%</span></div>
         </div>
         <button class="save-btn" onclick="saveResults()" id="save-btn">Save Results to Teacher</button>
     </div>
@@ -62,7 +62,10 @@
         let currentQuestion = 1;
         const maxQuestions = 10;
         let totalAttempts = 0;
-        let perfectAnswers = 0; // Tracks questions answered right on the FIRST try
+        
+        // Timer variables
+        let startTime;
+        let formattedTimeTaken = "";
 
         function startQuiz() {
             const nameInput = document.getElementById('student-name').value;
@@ -73,15 +76,16 @@
             studentName = nameInput;
             document.getElementById('setup-screen').style.display = 'none';
             document.getElementById('quiz-screen').style.display = 'block';
+            
+            // Start the clock!
+            startTime = new Date(); 
+            
             generateQuestion();
         }
 
         function generateQuestion() {
-            // Generate 3-digit number (100 to 999)
-            num1 = Math.floor(Math.random() * 900) + 100; 
-            // Generate 2-digit number (10 to 99)
-            num2 = Math.floor(Math.random() * 90) + 10; 
-            
+            num1 = Math.floor(Math.random() * 900) + 100; // 100 to 999
+            num2 = Math.floor(Math.random() * 90) + 10;   // 10 to 99
             correctAnswer = num1 * num2;
             
             document.getElementById('progress-text').innerText = `Question ${currentQuestion} of ${maxQuestions}`;
@@ -98,7 +102,6 @@
             totalAttempts++;
             const isCorrect = (parseInt(val) === correctAnswer);
 
-            // Calculate accuracy based on minimum possible attempts (which is equal to currentQuestion)
             const accuracy = Math.round((currentQuestion / totalAttempts) * 100);
             document.getElementById('stat-attempts').innerText = totalAttempts;
             document.getElementById('stat-score').innerText = accuracy + "%";
@@ -118,16 +121,26 @@
             } else {
                 feedback.innerText = "Incorrect. Try again! ❌";
                 feedback.style.color = "var(--error)";
-                document.getElementById('answer').value = ''; // Clear the box for them to try again
+                document.getElementById('answer').value = '';
                 document.getElementById('answer').focus();
             }
         }
 
         function showEndScreen() {
+            // Stop the clock and calculate time
+            const endTime = new Date();
+            const timeDiff = Math.floor((endTime - startTime) / 1000); // total seconds
+            const minutes = Math.floor(timeDiff / 60);
+            const seconds = timeDiff % 60;
+            formattedTimeTaken = `${minutes}m ${seconds}s`;
+
             document.getElementById('quiz-screen').style.display = 'none';
             document.getElementById('end-screen').style.display = 'block';
             
             const accuracy = Math.round((maxQuestions / totalAttempts) * 100);
+            
+            // Update final screen UI
+            document.getElementById('final-time').innerText = formattedTimeTaken;
             document.getElementById('final-attempts').innerText = totalAttempts;
             document.getElementById('final-score').innerText = accuracy + "%";
         }
@@ -139,11 +152,13 @@
 
             const accuracy = Math.round((maxQuestions / totalAttempts) * 100) + "%";
 
+            // Add the time data to the package we send to Google
             const data = {
                 name: studentName,
                 attempts: totalAttempts,
-                correct: maxQuestions, // Since they must finish, they always get 10 correct eventually
-                score: accuracy
+                correct: maxQuestions,
+                score: accuracy,
+                time: formattedTimeTaken
             };
 
             fetch(SCRIPT_URL, {
@@ -162,7 +177,6 @@
             });
         }
 
-        // Allow pressing Enter to submit
         document.getElementById('answer').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 if (document.getElementById('quiz-screen').style.display === 'block') {
