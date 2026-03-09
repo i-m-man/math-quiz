@@ -3,48 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Math Tracker</title>
+    <title>Advanced Math Mastery</title>
     <style>
         :root { --primary: #4a90e2; --success: #48bb78; --error: #f56565; }
         body { font-family: 'Segoe UI', sans-serif; background: #f7fafc; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box;}
-        .card { background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; width: 100%; max-width: 400px; margin-bottom: 20px; }
-        #question { font-size: 3rem; font-weight: bold; margin: 20px 0; color: #2d3748; }
-        input { font-size: 1.5rem; width: 80%; text-align: center; border: 2px solid #e2e8f0; border-radius: 10px; padding: 10px; margin-bottom: 10px; }
-        button { background: var(--primary); color: white; border: none; padding: 12px 20px; font-size: 1.1rem; border-radius: 8px; cursor: pointer; width: 100%; margin-bottom: 10px; }
-        .save-btn { background: var(--success); }
-        .stats { display: flex; justify-content: space-around; background: #edf2f7; padding: 10px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; color: #4a5568;}
+        .card { background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; width: 100%; max-width: 450px; margin-bottom: 20px; }
+        #question { font-size: 3rem; font-weight: bold; margin: 20px 0; color: #2d3748; letter-spacing: 2px; }
+        input { font-size: 1.8rem; width: 80%; text-align: center; border: 2px solid #e2e8f0; border-radius: 10px; padding: 10px; margin-bottom: 15px; }
+        button { background: var(--primary); color: white; border: none; padding: 12px 20px; font-size: 1.1rem; border-radius: 8px; cursor: pointer; width: 100%; margin-bottom: 10px; transition: 0.2s;}
+        button:hover { opacity: 0.9; }
+        .save-btn { background: var(--success); font-size: 1.3rem; padding: 15px; }
+        .stats { display: flex; justify-content: space-between; background: #edf2f7; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; color: #4a5568;}
+        .progress-text { font-size: 1.2rem; color: var(--primary); font-weight: bold; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
     <div class="card" id="setup-screen">
-        <h2>Welcome!</h2>
-        <p>Please enter your name to begin.</p>
+        <h2>Advanced Multiplication</h2>
+        <p>You must complete <b>10 questions</b> to finish the set. If you make a mistake, you must try again until you get it right!</p>
         <input type="text" id="student-name" placeholder="Your Name" autofocus>
-        <button onclick="startQuiz()">Start Quiz</button>
+        <button onclick="startQuiz()">Start Challenge</button>
     </div>
 
     <div class="card" id="quiz-screen" style="display: none;">
+        <div class="progress-text" id="progress-text">Question 1 of 10</div>
+        
         <div class="stats">
-            <div>Attempts: <span id="stat-attempts">0</span></div>
-            <div>Score: <span id="stat-score">0%</span></div>
+            <div>Total Attempts: <span id="stat-attempts">0</span></div>
+            <div>Accuracy: <span id="stat-score">100%</span></div>
         </div>
         
         <div id="question">? × ?</div>
-        <input type="number" id="answer" placeholder="Ans">
-        <button onclick="checkAnswer()">Submit Answer</button>
-        <button class="save-btn" onclick="saveResults()" id="save-btn">Finish & Save Results</button>
-        <div id="feedback" style="margin-top: 15px; font-weight: bold; height: 24px;"></div>
+        <input type="number" id="answer" placeholder="Your Answer">
+        <button onclick="checkAnswer()" id="submit-btn">Submit Answer</button>
+        
+        <div id="feedback" style="margin-top: 15px; font-size: 1.2rem; font-weight: bold; height: 30px;"></div>
+    </div>
+
+    <div class="card" id="end-screen" style="display: none;">
+        <h2>Set Complete! 🎉</h2>
+        <p>You finished all 10 questions.</p>
+        <div class="stats" style="flex-direction: column; gap: 10px;">
+            <div>Total Tries: <span id="final-attempts">0</span></div>
+            <div>Final Accuracy: <span id="final-score">0%</span></div>
+        </div>
+        <button class="save-btn" onclick="saveResults()" id="save-btn">Save Results to Teacher</button>
     </div>
 
     <script>
-        // 🚨 REPLACE THE LINK BELOW WITH YOUR GOOGLE APPS SCRIPT URL 🚨
+        // 🚨 REPLACE THIS WITH YOUR GOOGLE APPS SCRIPT URL 🚨
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrJwT2sjjRAZj6RFZEI6EcEFCLEesntJtAGWcj8Uz2ck2-UvVXqA8T0OAc3HLnsun9aw/exec"; 
 
         let num1, num2, correctAnswer;
         let studentName = "";
-        let sessionAttempts = 0;
-        let sessionCorrect = 0;
+        
+        // Session tracking
+        let currentQuestion = 1;
+        const maxQuestions = 10;
+        let totalAttempts = 0;
+        let perfectAnswers = 0; // Tracks questions answered right on the FIRST try
 
         function startQuiz() {
             const nameInput = document.getElementById('student-name').value;
@@ -59,9 +77,14 @@
         }
 
         function generateQuestion() {
-            num1 = Math.floor(Math.random() * 10) + 3; 
-            num2 = Math.floor(Math.random() * 10) + 3; 
+            // Generate 3-digit number (100 to 999)
+            num1 = Math.floor(Math.random() * 900) + 100; 
+            // Generate 2-digit number (10 to 99)
+            num2 = Math.floor(Math.random() * 90) + 10; 
+            
             correctAnswer = num1 * num2;
+            
+            document.getElementById('progress-text').innerText = `Question ${currentQuestion} of ${maxQuestions}`;
             document.getElementById('question').innerText = `${num1} × ${num2}`;
             document.getElementById('answer').value = '';
             document.getElementById('feedback').innerText = '';
@@ -72,66 +95,82 @@
             const val = document.getElementById('answer').value;
             if (val === "") return;
 
-            sessionAttempts++;
+            totalAttempts++;
             const isCorrect = (parseInt(val) === correctAnswer);
-            if (isCorrect) sessionCorrect++;
 
-            // Update Stats UI
-            document.getElementById('stat-attempts').innerText = sessionAttempts;
-            document.getElementById('stat-score').innerText = Math.round((sessionCorrect / sessionAttempts) * 100) + "%";
+            // Calculate accuracy based on minimum possible attempts (which is equal to currentQuestion)
+            const accuracy = Math.round((currentQuestion / totalAttempts) * 100);
+            document.getElementById('stat-attempts').innerText = totalAttempts;
+            document.getElementById('stat-score').innerText = accuracy + "%";
 
             const feedback = document.getElementById('feedback');
+            
             if (isCorrect) {
                 feedback.innerText = "Correct! 🌟";
                 feedback.style.color = "var(--success)";
-                setTimeout(generateQuestion, 1000);
+                
+                if (currentQuestion >= maxQuestions) {
+                    setTimeout(showEndScreen, 1000);
+                } else {
+                    currentQuestion++;
+                    setTimeout(generateQuestion, 1200);
+                }
             } else {
-                feedback.innerText = `Incorrect. It was ${correctAnswer}`;
+                feedback.innerText = "Incorrect. Try again! ❌";
                 feedback.style.color = "var(--error)";
-                setTimeout(generateQuestion, 2000);
+                document.getElementById('answer').value = ''; // Clear the box for them to try again
+                document.getElementById('answer').focus();
             }
         }
 
-        function saveResults() {
-            if (sessionAttempts === 0) {
-                alert("You haven't answered any questions yet!");
-                return;
-            }
+        function showEndScreen() {
+            document.getElementById('quiz-screen').style.display = 'none';
+            document.getElementById('end-screen').style.display = 'block';
+            
+            const accuracy = Math.round((maxQuestions / totalAttempts) * 100);
+            document.getElementById('final-attempts').innerText = totalAttempts;
+            document.getElementById('final-score').innerText = accuracy + "%";
+        }
 
+        function saveResults() {
             const btn = document.getElementById('save-btn');
             btn.innerText = "Saving to Database...";
             btn.disabled = true;
 
-            const finalScore = Math.round((sessionCorrect / sessionAttempts) * 100) + "%";
+            const accuracy = Math.round((maxQuestions / totalAttempts) * 100) + "%";
 
             const data = {
                 name: studentName,
-                attempts: sessionAttempts,
-                correct: sessionCorrect,
-                score: finalScore
+                attempts: totalAttempts,
+                correct: maxQuestions, // Since they must finish, they always get 10 correct eventually
+                score: accuracy
             };
 
             fetch(SCRIPT_URL, {
                 method: "POST",
-                headers: { "Content-Type": "text/plain" }, // Avoids CORS issues
+                headers: { "Content-Type": "text/plain" }, 
                 body: JSON.stringify(data)
             })
             .then(response => {
                 alert("Results saved successfully! Great job.");
-                location.reload(); // Restart the app
+                location.reload(); 
             })
             .catch(error => {
                 alert("Error saving results. Check your internet connection.");
-                btn.innerText = "Finish & Save Results";
+                btn.innerText = "Save Results to Teacher";
                 btn.disabled = false;
             });
         }
 
+        // Allow pressing Enter to submit
         document.getElementById('answer').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') checkAnswer();
-        });
-        document.getElementById('student-name').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') startQuiz();
+            if (e.key === 'Enter') {
+                if (document.getElementById('quiz-screen').style.display === 'block') {
+                    checkAnswer();
+                } else if (document.getElementById('setup-screen').style.display !== 'none') {
+                    startQuiz();
+                }
+            }
         });
     </script>
 </body>
