@@ -3,33 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guided Long Division</title>
+    <title>Visual Long Division Mastery</title>
     <style>
-        :root { --primary: #4a90e2; --success: #48bb78; --error: #f56565; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f7fafc; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box;}
-        .card { background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 500px; margin-bottom: 20px; }
+        :root { --primary: #4a90e2; --success: #48bb78; --error: #f56565; --grid-line: #cbd5e0;}
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f7fafc; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
         
-        /* New Styles for the Chat/Log layout */
-        .history-log { background: #edf2f7; padding: 15px; border-radius: 10px; margin-bottom: 20px; max-height: 300px; overflow-y: auto; font-size: 1.1rem; color: #2d3748; }
-        .log-entry { margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
-        .log-correct { color: var(--success); font-weight: bold; float: right; }
+        .card { background: white; padding: 2.5rem; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 100%; max-width: 550px; margin-bottom: 20px; box-sizing: border-box;}
         
-        #question-header { font-size: 2.5rem; font-weight: bold; margin: 10px 0; color: #2d3748; text-align: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;}
-        #current-prompt { font-size: 1.3rem; font-weight: bold; color: var(--primary); margin-bottom: 15px; }
+        /* Math Book Grid Styles */
+        .division-grid { font-family: 'Courier New', Courier, monospace; font-size: 2.5rem; color: #2d3748; table-layout: fixed; border-collapse: collapse; margin: 30px auto; width: auto; }
+        .division-grid td { width: 35px; height: 35px; text-align: center; vertical-align: middle; }
         
-        input { font-size: 1.5rem; width: 100%; text-align: center; border: 2px solid #e2e8f0; border-radius: 10px; padding: 10px; margin-bottom: 15px; box-sizing: border-box;}
-        button { background: var(--primary); color: white; border: none; padding: 12px 20px; font-size: 1.1rem; border-radius: 8px; cursor: pointer; width: 100%; margin-bottom: 10px; transition: 0.2s;}
+        /* Drawing the Long Division Bracket */
+        .divisor { border-right: 2px solid #2d3748; padding-right: 5px; color: #4a5568;}
+        .dividend-box { border-bottom: 2px solid #2d3748;} /* The top bar of the house */
+        
+        /* The dynamic subtraction lines */
+        .sub-line { border-bottom: 2px solid #2d3748;}
+        
+        /* Styles for student input boxes in the grid */
+        .grid-input { font-family: 'Courier New', Courier, monospace; font-size: 2.2rem; width: 32px; height: 32px; text-align: center; border: 2px solid #edf2f7; border-radius: 4px; padding: 0; background: #fdfdfd; margin: 1px;}
+        .grid-input:focus { outline: 2px solid var(--primary); background: #e6f3ff;}
+        .grid-input.active { border-color: var(--primary); background: #e6f3ff; }
+        
+        /* Standardizing standard text values in the grid */
+        .val-fixed { color: #2d3748; font-weight: bold; }
+        .rem-0 { color: var(--success); font-weight: bold; font-size: 2.8rem; }
+        
+        button { background: var(--primary); color: white; border: none; padding: 12px 20px; font-size: 1.1rem; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 15px; transition: 0.2s; }
         button:hover { opacity: 0.9; }
-        .save-btn { background: var(--success); font-size: 1.3rem; padding: 15px; }
-        .stats { display: flex; justify-content: space-between; background: #edf2f7; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; color: #4a5568;}
+        .save-btn { background: var(--success); font-size: 1.3rem; padding: 15px; margin-top: 0;}
+        .stats { display: flex; justify-content: space-between; background: #edf2f7; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; color: #4a5568;}
     </style>
 </head>
 <body>
 
     <div class="card" id="setup-screen">
-        <h2 style="text-align: center;">Guided Long Division</h2>
-        <p>Complete <b>5 problems</b>. We will guide you step-by-step through the process. <br><br><i>Time is ticking!</i> ⏱️</p>
-        <input type="text" id="student-name" placeholder="Your Name" autofocus>
+        <h2>Visual Long Division Challenge</h2>
+        <p>Complete <b>5 problems</b> using the traditional long division visual grid. <br><br>Fill in the highlighted boxes to solve the problem! <br><br><i>Note: You are being timed!</i> ⏱️</p>
+        <input type="text" id="student-name" placeholder="Your Name" style="font-size: 1.3rem; padding: 10px; border-radius: 8px; border: 2px solid #e2e8f0; width: 80%;" autofocus>
         <button onclick="startQuiz()">Start Challenge</button>
     </div>
 
@@ -39,21 +51,17 @@
             <div>Mistakes: <span id="stat-mistakes">0</span></div>
         </div>
         
-        <div id="question-header">? ÷ ?</div>
+        <div id="grid-container">
+            <table class="division-grid" id="main-grid"></table>
+        </div>
         
-        <div class="history-log" id="history-log">
-            </div>
-
-        <div id="current-prompt">Generating problem...</div>
-        <input type="number" id="answer" placeholder="Type here...">
-        <button onclick="checkStep()" id="submit-btn">Submit Step</button>
-        
-        <div id="feedback" style="margin-top: 10px; font-size: 1.1rem; font-weight: bold; height: 25px; text-align: center;"></div>
+        <div id="feedback" style="margin-top: 15px; font-size: 1.2rem; font-weight: bold; height: 30px; color: var(--success);"></div>
     </div>
 
     <div class="card" id="end-screen" style="display: none;">
-        <h2 style="text-align: center;">All Sets Complete! 🎉</h2>
-        <div class="stats" style="flex-direction: column; gap: 10px;">
+        <h2>Sets Complete! 🎉</h2>
+        <p>You mastered the visual grids.</p>
+        <div class="stats" style="flex-direction: column; gap: 10px; text-align: left;">
             <div>⏱️ Time Taken: <span id="final-time" style="float: right;">0</span></div>
             <div>❌ Total Mistakes: <span id="final-mistakes" style="float: right;">0</span></div>
             <div>📊 Grade: <span id="final-score" style="float: right;">0%</span></div>
@@ -66,18 +74,12 @@
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrJwT2sjjRAZj6RFZEI6EcEFCLEesntJtAGWcj8Uz2ck2-UvVXqA8T0OAc3HLnsun9aw/exec"; 
 
         let studentName = "";
-        let startTime;
-        let formattedTimeTaken = "";
+        let startTime, formattedTimeTaken;
+        let currentProblemNum = 1, maxProblems = 5, totalMistakes = 0, totalStepsTaken = 0;
         
-        // Session tracking
-        let currentProblemNum = 1;
-        const maxProblems = 5; // Reduced to 5 because division has many steps
-        let totalMistakes = 0;
-        let totalStepsTaken = 0;
-        
-        // Step Logic Array
-        let stepSequence = [];
-        let currentStepIndex = 0;
+        // Problem variables
+        let divisor, dividend, finalAnswer;
+        let activeInputGroup = []; // Holds the input fields for the CURRENT step
 
         function startQuiz() {
             const nameInput = document.getElementById('student-name').value;
@@ -90,98 +92,261 @@
         }
 
         function generateNewProblem() {
-            // Generate a 1-digit divisor (2 to 9) and a random answer to guarantee whole numbers for now
-            let divisor = Math.floor(Math.random() * 8) + 2; 
-            let finalAnswer = Math.floor(Math.random() * 80) + 11; // 11 to 90
-            let dividend = (divisor * finalAnswer).toString();
+            // Generate simple whole number problems: 3-digit dividend, 1-digit divisor
+            divisor = Math.floor(Math.random() * 8) + 2; 
+            finalAnswer = Math.floor(Math.random() * 80) + 11; // 11 to 90
+            dividend = (divisor * finalAnswer).toString();
             
-            document.getElementById('question-header').innerText = `${dividend} ÷ ${divisor}`;
-            document.getElementById('history-log').innerHTML = ""; // Clear log
+            totalStepsTaken = 0;
+            activeInputGroup = [];
+            
             document.getElementById('stat-problem').innerText = `${currentProblemNum} / ${maxProblems}`;
+            document.getElementById('feedback').innerText = "";
+            setupVisualGrid();
+        }
+
+        function setupVisualGrid() {
+            const table = document.getElementById('main-grid');
+            table.innerHTML = ""; // Clear existing grid
             
-            stepSequence = [];
-            let currentStr = "";
+            // Create the first few rows (quotient answer bar and bracket)
+            createRow(table, 'ans-row', dividend.length + 2); // quotient row
+            createRow(table, 'div-row', dividend.length + 2); // divisor & bracket row
             
-            // Build the conversational steps
+            const divRowCells = table.rows[1].cells;
+            
+            // Draw the Divisor
+            divRowCells[0].innerText = divisor;
+            divRowCells[0].className = "divisor";
+            
+            // Draw the Dividend and top bracket line
             for (let i = 0; i < dividend.length; i++) {
-                currentStr += dividend[i];
-                let currentNum = parseInt(currentStr, 10);
-                
-                // If the number is big enough to divide, or we are at the very last digit
-                if (currentNum >= divisor || (i === dividend.length - 1)) {
-                    let q = Math.floor(currentNum / divisor);
-                    
-                    if (i > 0) stepSequence.push({ msg: `Bring down the ${dividend[i]}. What is ${currentNum} ÷ ${divisor}?`, ans: q });
-                    else stepSequence.push({ msg: `Look at the first part: ${currentNum}. What is ${currentNum} ÷ ${divisor}?`, ans: q });
-                    
-                    let prod = q * divisor;
-                    stepSequence.push({ msg: `Multiply: ${divisor} × ${q} = ?`, ans: prod });
-                    
-                    let rem = currentNum - prod;
-                    stepSequence.push({ msg: `Subtract: ${currentNum} - ${prod} = ?`, ans: rem });
-                    
-                    currentStr = rem === 0 ? "" : rem.toString();
-                }
+                divRowCells[i+2].innerText = dividend[i];
+                divRowCells[i+2].className = "dividend-box val-fixed";
             }
-            stepSequence.push({ msg: `Awesome! What is the final answer for ${dividend} ÷ ${divisor}?`, ans: finalAnswer });
             
-            currentStepIndex = 0;
-            loadNextStep();
+            // --- GENERATE THE STEPS ---
+            generateVisualSteps(table, dividend, divisor);
         }
 
-        function loadNextStep() {
-            document.getElementById('current-prompt').innerText = stepSequence[currentStepIndex].msg;
-            document.getElementById('answer').value = '';
-            document.getElementById('answer').focus();
-        }
-
-        function checkStep() {
-            const val = document.getElementById('answer').value;
-            if (val === "") return;
-
-            totalStepsTaken++;
-            const expectedAnswer = stepSequence[currentStepIndex].ans;
-            const isCorrect = (parseInt(val) === expectedAnswer);
-            const feedback = document.getElementById('feedback');
-
-            if (isCorrect) {
-                feedback.innerText = "Correct! 🌟";
-                feedback.style.color = "var(--success)";
+        // --- THE DYNAMIC STEP GENERATOR ENGINE ---
+        // This is the hard part! We generate the logic sequence and the grid row by row
+        function generateVisualSteps(table, dividendStr, div) {
+            let sequence = [];
+            let currValStr = "";
+            let startCol = 2; // Where the dividend digits start
+            
+            for (let i = 0; i < dividendStr.length; i++) {
+                currValStr += dividendStr[i];
+                let currVal = parseInt(currValStr, 10);
                 
-                // Add to history log
-                const logDiv = document.getElementById('history-log');
-                logDiv.innerHTML += `<div class="log-entry">${stepSequence[currentStepIndex].msg} <b>${val}</b> <span class="log-correct">✓</span></div>`;
-                logDiv.scrollTop = logDiv.scrollHeight; // Auto-scroll to bottom
-
-                currentStepIndex++;
-
-                if (currentStepIndex >= stepSequence.length) {
-                    // Problem finished!
-                    if (currentProblemNum >= maxProblems) {
-                        setTimeout(showEndScreen, 1000);
-                    } else {
-                        currentProblemNum++;
-                        feedback.innerText = "Problem complete! Loading next...";
-                        setTimeout(generateNewProblem, 1500);
+                // If it's big enough to divide, or we are at the last digit
+                if (currVal >= div || (i === dividendStr.length - 1)) {
+                    let q = Math.floor(currVal / divisor);
+                    
+                    // 1. ADD QUOTIENT STEP (TOP ROW)
+                    // The correct quotient input must go in Column [2 + i] (above the dividend digit)
+                    let qCol = startCol + i;
+                    sequence.push({
+                        type: 'input', row: 0, col: qCol, ans: q.toString(), size: 1
+                    });
+                    
+                    // 2. ADD MULTIPLY STEP (BELOW THE BRACKET)
+                    let prod = q * div;
+                    let prodRow = sequence.length === 0 ? 2 : table.rows.length;
+                    
+                    if (sequence.filter(s => s.row === prodRow).length === 0) {
+                        createRow(table, `mult-${prodRow}`, dividendStr.length + 2);
                     }
-                } else {
-                    // Load next step in the sequence
-                    setTimeout(() => {
-                        feedback.innerText = "";
-                        loadNextStep();
-                    }, 500);
+                    
+                    let pStr = prod.toString();
+                    let pStartCol = qCol - (pStr.length - 1);
+                    
+                    sequence.push({
+                        type: 'input', row: table.rows.length - 1, col: pStartCol, ans: pStr, size: pStr.length
+                    });
+                    
+                    // 3. ADD SUBTRACT AND REMAINDER STEP
+                    let rem = currVal - prod;
+                    let remRowIndex = table.rows.length;
+                    createRow(table, `rem-${remRowIndex}`, dividendStr.length + 2);
+                    
+                    // Add the line above the subtraction
+                    let lineRow = table.rows[remRowIndex - 1];
+                    for (let c = pStartCol; c <= qCol; c++) {
+                        lineRow.cells[c].className += " sub-line";
+                    }
+                    
+                    let rStr = rem.toString();
+                    if (rem === 0 && i < dividendStr.length - 1) rStr = "0"; // Handle middle zero remainders
+
+                    let rStartCol = qCol - (rStr.length - 1);
+
+                    sequence.push({
+                        type: 'input', row: remRowIndex, col: rStartCol, ans: rStr, size: rStr.length
+                    });
+                    
+                    // Handle the "Bring Down" step for visualization
+                    if (i < dividendStr.length - 1) {
+                         let nextVal = dividendStr[i+1];
+                         sequence.push({
+                             type: 'bringdown', row: remRowIndex, col: rStartCol + rStr.length, ans: nextVal
+                         });
+                         currValStr = (rem === 0) ? "" : rem.toString();
+                    } else {
+                        // END OF PROBLEM - REMAINDER 0
+                        sequence.push({
+                            type: 'finalrem', row: remRowIndex, col: rStartCol, ans: rem.toString()
+                        });
+                    }
                 }
-            } else {
-                totalMistakes++;
-                document.getElementById('stat-mistakes').innerText = totalMistakes;
-                feedback.innerText = "Incorrect. Try again! ❌";
-                feedback.style.color = "var(--error)";
-                document.getElementById('answer').value = '';
-                document.getElementById('answer').focus();
             }
+            
+            // Final structure step: generate the interactive inputs
+            setupInputSequence(table, sequence);
+        }
+
+        // Sets up the sequential input field generation
+        function setupInputSequence(table, sequence) {
+            let seqIdx = 0;
+
+            function loadNextStep() {
+                if (seqIdx >= sequence.length) return; // Sequence done
+
+                let step = sequence[seqIdx];
+                activeInputGroup = []; // Clear last active group
+
+                if (step.type === 'input') {
+                    // Create visual input boxes on the grid
+                    let row = table.rows[step.row];
+                    let expectedAnsStr = step.ans;
+                    
+                    for (let i = 0; i < step.size; i++) {
+                        let colIdx = step.col + i;
+                        let cell = row.cells[colIdx];
+                        
+                        // Create HTML input element
+                        let input = document.createElement('input');
+                        input.type = 'number';
+                        input.className = 'grid-input active';
+                        input.maxLength = 1;
+                        
+                        // Set standard validation attributes for consistency
+                        input.dataset.ans = expectedAnsStr[i]; 
+                        input.dataset.group = seqIdx; 
+                        
+                        cell.appendChild(input);
+                        activeInputGroup.push(input);
+                    }
+                    
+                    // Add listeners for auto-focus and auto-checking
+                    activeInputGroup.forEach((inp, idx) => {
+                        inp.addEventListener('input', () => {
+                            if (inp.value.length === 1 && idx < activeInputGroup.length - 1) {
+                                activeInputGroup[idx+1].focus(); // Auto-focus next box
+                            }
+                            if (inp.value.length === 1 && idx === activeInputGroup.length - 1) {
+                                checkActiveGroup(); // Auto-check when the group is full
+                            }
+                        });
+                    });
+                    
+                    activeInputGroup[0].focus(); // Focus first box
+                
+                } else if (step.type === 'bringdown') {
+                    // Visually Bring Down the next digit
+                    let row = table.rows[step.row];
+                    let cell = row.cells[step.col];
+                    cell.innerText = step.ans;
+                    cell.className += " val-fixed";
+                    
+                    document.getElementById('feedback').innerText = `Bringing down the ${step.ans}. What is the next division?`;
+                    
+                    setTimeout(() => {
+                        seqIdx++;
+                        loadNextStep();
+                    }, 1000);
+                
+                } else if (step.type === 'finalrem') {
+                    // Set completed visually on remainder row
+                    let row = table.rows[step.row];
+                    let cell = row.cells[step.col];
+                    if(step.ans === "0") {
+                        cell.innerText = step.ans;
+                        cell.className += " rem-0";
+                    }
+                    
+                    handleProblemCompletion();
+                }
+            }
+
+            function checkActiveGroup() {
+                totalStepsTaken++;
+                let allCorrect = true;
+                
+                activeInputGroup.forEach(inp => {
+                    if (inp.value !== inp.dataset.ans) allCorrect = false;
+                });
+                
+                if (allCorrect) {
+                    // SUCCESS STEP
+                    document.getElementById('feedback').innerText = "Correct! 🌟";
+                    document.getElementById('feedback').style.color = "var(--success)";
+                    
+                    // Lock the completed inputs and convert them to standard grid text
+                    activeInputGroup.forEach(inp => {
+                        let cell = inp.parentElement;
+                        cell.innerText = inp.value;
+                        cell.className += " val-fixed";
+                    });
+                    
+                    // Move to the next logic step
+                    seqIdx++;
+                    setTimeout(() => {
+                         document.getElementById('feedback').innerText = "";
+                         loadNextStep();
+                    }, 800);
+                    
+                } else {
+                    // MISTAKE
+                    totalMistakes++;
+                    document.getElementById('stat-mistakes').innerText = totalMistakes;
+                    document.getElementById('feedback').innerText = "Mistake in the boxes. Try again! ❌";
+                    document.getElementById('feedback').style.color = "var(--error)";
+                    
+                    // Reset the current input group
+                    activeInputGroup.forEach(inp => inp.value = "");
+                    activeInputGroup[0].focus();
+                }
+            }
+
+            loadNextStep(); // Start the first step
+        }
+
+        // Handling problem finish
+        function handleProblemCompletion() {
+            document.getElementById('feedback').innerText = `Finished! ${dividend} ÷ ${divisor} = ${finalAnswer} 🎉`;
+            document.getElementById('feedback').style.color = "var(--success)";
+            
+            setTimeout(() => {
+                if (currentProblemNum >= maxProblems) {
+                    showEndScreen();
+                } else {
+                    currentProblemNum++;
+                    generateNewProblem();
+                }
+            }, 2500);
+        }
+
+        // Helper function: generates standard grid table rows
+        function createRow(table, rowId, numCells) {
+            let row = table.insertRow(-1);
+            row.id = rowId;
+            for (let i = 0; i < numCells; i++) { row.insertCell(-1); }
         }
 
         function showEndScreen() {
+            // Stop the clock
             const endTime = new Date();
             const timeDiff = Math.floor((endTime - startTime) / 1000); 
             const minutes = Math.floor(timeDiff / 60);
@@ -191,9 +356,10 @@
             document.getElementById('quiz-screen').style.display = 'none';
             document.getElementById('end-screen').style.display = 'block';
             
-            // Calculate a grade based on steps vs mistakes
+            // Grade calculation: Based on total grid boxes vs mistakes
             let grade = Math.round(((totalStepsTaken - totalMistakes) / totalStepsTaken) * 100);
             if (grade < 0) grade = 0;
+            if (totalStepsTaken === 0) grade = 100; // Case for no mistakes
             
             document.getElementById('final-time').innerText = formattedTimeTaken;
             document.getElementById('final-mistakes').innerText = totalMistakes;
@@ -205,13 +371,13 @@
             btn.innerText = "Saving to Database...";
             btn.disabled = true;
 
-            let grade = Math.round(((totalStepsTaken - totalMistakes) / totalStepsTaken) * 100);
+            let grade = document.getElementById('final-score').innerText;
 
             const data = {
                 name: studentName,
                 attempts: totalStepsTaken, 
                 correct: maxProblems,
-                score: grade + "%",
+                score: grade,
                 time: formattedTimeTaken
             };
 
@@ -228,13 +394,6 @@
                 btn.disabled = false;
             });
         }
-
-        document.getElementById('answer').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                if (document.getElementById('quiz-screen').style.display === 'block') checkStep();
-                else if (document.getElementById('setup-screen').style.display !== 'none') startQuiz();
-            }
-        });
     </script>
 </body>
 </html>
