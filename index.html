@@ -3,78 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visual Long Division Mastery</title>
+    <title>Visual Math Mastery</title>
     <style>
-        :root { --primary: #4a90e2; --success: #48bb78; --error: #f56565; --grid-line: #cbd5e0;}
+        :root { --primary: #4a90e2; --mult: #ed8936; --success: #48bb78; --error: #f56565; --grid-line: #cbd5e0;}
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f7fafc; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
         
-        .card { background: white; padding: 2.5rem; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 100%; max-width: 550px; margin-bottom: 20px; box-sizing: border-box;}
+        .card { background: white; padding: 2.5rem; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 100%; max-width: 600px; margin-bottom: 20px; box-sizing: border-box;}
         
         /* Math Book Grid Styles */
-        .division-grid { font-family: 'Courier New', Courier, monospace; font-size: 2.5rem; color: #2d3748; table-layout: fixed; border-collapse: collapse; margin: 30px auto; width: auto; }
-        .division-grid td { width: 35px; height: 35px; text-align: center; vertical-align: middle; }
+        .math-grid { font-family: 'Courier New', Courier, monospace; font-size: 2.5rem; color: #2d3748; table-layout: fixed; border-collapse: collapse; margin: 30px auto; width: auto; }
+        .math-grid td { width: 40px; height: 40px; text-align: center; vertical-align: middle; }
         
-        /* Drawing the Long Division Bracket */
+        /* Division Specific */
         .divisor { border-right: 2px solid #2d3748; padding-right: 5px; color: #4a5568;}
         .dividend-box { border-bottom: 2px solid #2d3748;}
+        
+        /* Subtraction / Addition Lines */
         .sub-line { border-bottom: 2px solid #2d3748;}
         
-        /* THE FIX: Adjusted input box styles and hid the arrows */
+        /* Interactive Inputs */
         .grid-input { 
             font-family: 'Courier New', Courier, monospace; 
-            font-size: 2rem; 
-            width: 35px; /* Slightly wider */
-            height: 35px; 
+            font-size: 2.2rem; 
+            width: 38px; 
+            height: 38px; 
             text-align: center; 
             border: 2px solid #edf2f7; 
             border-radius: 4px; 
             padding: 0; 
             background: #fdfdfd; 
             margin: 1px;
-            caret-color: var(--primary); /* Makes the typing cursor visible */
+            caret-color: var(--primary);
         }
         .grid-input:focus { outline: 2px solid var(--primary); background: #e6f3ff;}
         .grid-input.active { border-color: var(--primary); background: #e6f3ff; }
         
-        /* THE FIX: Force browsers to remove the up/down arrows */
+        /* Multiplication focuses use a different color for fun */
+        .mult-mode .grid-input:focus { outline: 2px solid var(--mult); background: #fffaf0;}
+        .mult-mode .grid-input.active { border-color: var(--mult); background: #fffaf0;}
+        
+        /* Hide Arrows on inputs */
         .grid-input::-webkit-outer-spin-button,
-        .grid-input::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-        input[type=number] {
-            -moz-appearance: textfield;
-        }
+        .grid-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
         
         .val-fixed { color: #2d3748; font-weight: bold; }
         .rem-0 { color: var(--success); font-weight: bold; font-size: 2.8rem; }
         
-        button { background: var(--primary); color: white; border: none; padding: 12px 20px; font-size: 1.1rem; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 15px; transition: 0.2s; }
-        button:hover { opacity: 0.9; }
+        button { background: var(--primary); color: white; border: none; padding: 15px 20px; font-size: 1.2rem; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 15px; transition: 0.2s; font-weight: bold;}
+        button:hover { opacity: 0.9; transform: translateY(-2px); }
+        .btn-mult { background: var(--mult); }
         .save-btn { background: var(--success); font-size: 1.3rem; padding: 15px; margin-top: 0;}
-        .stats { display: flex; justify-content: space-between; background: #edf2f7; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; color: #4a5568;}
+        
+        .stats { display: flex; justify-content: space-between; background: #edf2f7; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-weight: bold; color: #4a5568;}
     </style>
 </head>
 <body>
 
     <div class="card" id="setup-screen">
-        <h2>Visual Long Division Challenge</h2>
-        <p>Complete <b>5 problems</b> using the traditional long division visual grid. <br><br>Fill in the highlighted boxes to solve the problem! <br><br><i>Note: You are being timed!</i> ⏱️</p>
-        <input type="text" id="student-name" placeholder="Your Name" style="font-size: 1.3rem; padding: 10px; border-radius: 8px; border: 2px solid #e2e8f0; width: 80%;" autofocus>
-        <button onclick="startQuiz()">Start Challenge</button>
+        <h2>Visual Math Mastery</h2>
+        <p>Enter your name and select your challenge! <br><br><i>Note: You are being timed!</i> ⏱️</p>
+        <input type="text" id="student-name" placeholder="Your Name" style="font-size: 1.3rem; padding: 10px; border-radius: 8px; border: 2px solid #e2e8f0; width: 80%; margin-bottom: 20px;" autofocus>
+        
+        <div style="display: flex; gap: 15px;">
+            <button class="btn-mult" onclick="startQuiz('mult')">✖️ Multiplication (3x2)</button>
+            <button onclick="startQuiz('div')">➗ Long Division</button>
+        </div>
     </div>
 
     <div class="card" id="quiz-screen" style="display: none;">
+        <h2 id="quiz-title" style="margin-top: 0; color: #2d3748;">Challenge</h2>
         <div class="stats">
             <div>Problem: <span id="stat-problem">1 / 5</span></div>
             <div>Mistakes: <span id="stat-mistakes">0</span></div>
         </div>
         
         <div id="grid-container">
-            <table class="division-grid" id="main-grid"></table>
+            <table class="math-grid" id="main-grid"></table>
         </div>
         
-        <div id="feedback" style="margin-top: 15px; font-size: 1.2rem; font-weight: bold; height: 30px; color: var(--success);"></div>
+        <div id="feedback" style="margin-top: 15px; font-size: 1.2rem; font-weight: bold; height: 30px; color: var(--primary);"></div>
     </div>
 
     <div class="card" id="end-screen" style="display: none;">
@@ -92,57 +100,71 @@
         // 🚨 REPLACE THIS WITH YOUR GOOGLE APPS SCRIPT URL 🚨
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrJwT2sjjRAZj6RFZEI6EcEFCLEesntJtAGWcj8Uz2ck2-UvVXqA8T0OAc3HLnsun9aw/exec"; 
 
-        let studentName = "";
+        let studentName = "", quizMode = "";
         let startTime, formattedTimeTaken;
         let currentProblemNum = 1, maxProblems = 5, totalMistakes = 0, totalStepsTaken = 0;
         
-        let divisor, dividend, finalAnswer;
+        let num1, num2, finalAnswer;
         let activeInputGroup = [];
 
-        function startQuiz() {
+        function startQuiz(mode) {
             const nameInput = document.getElementById('student-name').value;
             if (nameInput.trim() === "") { alert("Please enter a name!"); return; }
             studentName = nameInput;
+            quizMode = mode;
+            
             document.getElementById('setup-screen').style.display = 'none';
             document.getElementById('quiz-screen').style.display = 'block';
+            
+            if (mode === 'mult') {
+                document.getElementById('quiz-title').innerText = "Multiplication Mastery";
+                document.getElementById('main-grid').classList.add('mult-mode');
+            } else {
+                document.getElementById('quiz-title').innerText = "Long Division Mastery";
+            }
+            
             startTime = new Date(); 
             generateNewProblem();
         }
 
         function generateNewProblem() {
-            divisor = Math.floor(Math.random() * 8) + 2; 
-            finalAnswer = Math.floor(Math.random() * 80) + 11; 
-            dividend = (divisor * finalAnswer).toString();
-            
             totalStepsTaken = 0;
             activeInputGroup = [];
-            
             document.getElementById('stat-problem').innerText = `${currentProblemNum} / ${maxProblems}`;
             document.getElementById('feedback').innerText = "";
-            setupVisualGrid();
+            document.getElementById('main-grid').innerHTML = ""; 
+
+            if (quizMode === 'div') {
+                // Division Logic
+                num2 = Math.floor(Math.random() * 8) + 2; // Divisor (1 digit)
+                finalAnswer = Math.floor(Math.random() * 80) + 11; // Quotient (11-90)
+                num1 = num2 * finalAnswer; // Dividend
+                setupDivisionGrid(num1.toString(), num2);
+            } else {
+                // Multiplication Logic
+                num1 = Math.floor(Math.random() * 900) + 100; // 3 digits
+                // Generate 2 digit number without 0s to keep the grid perfectly clean
+                num2 = (Math.floor(Math.random() * 9) + 1) * 10 + (Math.floor(Math.random() * 9) + 1); 
+                finalAnswer = num1 * num2;
+                setupMultiplicationGrid(num1, num2);
+            }
         }
 
-        function setupVisualGrid() {
+        // --- DIVISION ENGINE ---
+        function setupDivisionGrid(dividendStr, div) {
             const table = document.getElementById('main-grid');
-            table.innerHTML = ""; 
-            
-            createRow(table, 'ans-row', dividend.length + 2); 
-            createRow(table, 'div-row', dividend.length + 2); 
+            createRow(table, 'ans-row', dividendStr.length + 2); 
+            createRow(table, 'div-row', dividendStr.length + 2); 
             
             const divRowCells = table.rows[1].cells;
-            
-            divRowCells[0].innerText = divisor;
+            divRowCells[0].innerText = div;
             divRowCells[0].className = "divisor";
             
-            for (let i = 0; i < dividend.length; i++) {
-                divRowCells[i+2].innerText = dividend[i];
+            for (let i = 0; i < dividendStr.length; i++) {
+                divRowCells[i+2].innerText = dividendStr[i];
                 divRowCells[i+2].className = "dividend-box val-fixed";
             }
             
-            generateVisualSteps(table, dividend, divisor);
-        }
-
-        function generateVisualSteps(table, dividendStr, div) {
             let sequence = [];
             let currValStr = "";
             let startCol = 2; 
@@ -152,41 +174,30 @@
                 let currVal = parseInt(currValStr, 10);
                 
                 if (currVal >= div || (i === dividendStr.length - 1)) {
-                    let q = Math.floor(currVal / divisor);
+                    let q = Math.floor(currVal / div);
                     let qCol = startCol + i;
-                    sequence.push({ type: 'input', row: 0, col: qCol, ans: q.toString(), size: 1 });
+                    sequence.push({ type: 'input', row: 0, col: qCol, ans: q.toString(), size: 1, dir: 'ltr' });
                     
                     let prod = q * div;
                     let prodRow = sequence.length === 0 ? 2 : table.rows.length;
-                    
-                    if (sequence.filter(s => s.row === prodRow).length === 0) {
-                        createRow(table, `mult-${prodRow}`, dividendStr.length + 2);
-                    }
+                    if (sequence.filter(s => s.row === prodRow).length === 0) createRow(table, `mult-${prodRow}`, dividendStr.length + 2);
                     
                     let pStr = prod.toString();
-                    let pStartCol = qCol - (pStr.length - 1);
-                    
-                    sequence.push({ type: 'input', row: table.rows.length - 1, col: pStartCol, ans: pStr, size: pStr.length });
+                    sequence.push({ type: 'input', row: table.rows.length - 1, col: qCol - (pStr.length - 1), ans: pStr, size: pStr.length, dir: 'ltr' });
                     
                     let rem = currVal - prod;
                     let remRowIndex = table.rows.length;
                     createRow(table, `rem-${remRowIndex}`, dividendStr.length + 2);
                     
                     let lineRow = table.rows[remRowIndex - 1];
-                    for (let c = pStartCol; c <= qCol; c++) {
-                        lineRow.cells[c].className += " sub-line";
-                    }
+                    for (let c = qCol - (pStr.length - 1); c <= qCol; c++) lineRow.cells[c].className += " sub-line";
                     
-                    let rStr = rem.toString();
-                    if (rem === 0 && i < dividendStr.length - 1) rStr = "0"; 
-
+                    let rStr = rem === 0 && i < dividendStr.length - 1 ? "0" : rem.toString();
                     let rStartCol = qCol - (rStr.length - 1);
-
-                    sequence.push({ type: 'input', row: remRowIndex, col: rStartCol, ans: rStr, size: rStr.length });
+                    sequence.push({ type: 'input', row: remRowIndex, col: rStartCol, ans: rStr, size: rStr.length, dir: 'ltr' });
                     
                     if (i < dividendStr.length - 1) {
-                         let nextVal = dividendStr[i+1];
-                         sequence.push({ type: 'bringdown', row: remRowIndex, col: rStartCol + rStr.length, ans: nextVal });
+                         sequence.push({ type: 'bringdown', row: remRowIndex, col: rStartCol + rStr.length, ans: dividendStr[i+1] });
                          currValStr = (rem === 0) ? "" : rem.toString();
                     } else {
                         sequence.push({ type: 'finalrem', row: remRowIndex, col: rStartCol, ans: rem.toString() });
@@ -196,73 +207,107 @@
             setupInputSequence(table, sequence);
         }
 
+        // --- MULTIPLICATION ENGINE ---
+        function setupMultiplicationGrid(n1, n2) {
+            const table = document.getElementById('main-grid');
+            let n1Str = n1.toString();
+            let n2Str = n2.toString();
+            let ansStr = finalAnswer.toString();
+            
+            // Grid width
+            let w = ansStr.length + 1; 
+            
+            for(let i=0; i<5; i++) createRow(table, `m-row${i}`, w);
+            
+            // Draw Num 1 (Top)
+            for(let i=0; i<n1Str.length; i++) {
+                let cell = table.rows[0].cells[w - n1Str.length + i];
+                cell.innerText = n1Str[i]; cell.className = "val-fixed";
+            }
+            
+            // Draw Num 2 and X sign (Row 2)
+            table.rows[1].cells[w - n2Str.length - 1].innerText = '×';
+            table.rows[1].cells[w - n2Str.length - 1].className = "val-fixed";
+            for(let i=0; i<n2Str.length; i++) {
+                let cell = table.rows[1].cells[w - n2Str.length + i];
+                cell.innerText = n2Str[i]; cell.className = "val-fixed";
+            }
+            for(let c=1; c<w; c++) table.rows[1].cells[c].className += " sub-line";
+            
+            let sequence = [];
+            
+            // Step 1: Partial Product 1 (Top digit * Bottom Ones)
+            let p1 = n1 * parseInt(n2Str[1]);
+            let p1Str = p1.toString();
+            sequence.push({ type: 'input', row: 2, col: w - p1Str.length, ans: p1Str, size: p1Str.length, dir: 'rtl', msg: `Step 1: Multiply ${n1} × ${n2Str[1]}` });
+            
+            // Step 2: Partial Product 2 (Top digit * Bottom Tens)
+            let p2 = n1 * parseInt(n2Str[0]);
+            let p2Str = p2.toString();
+            table.rows[3].cells[w - 1].innerText = '0'; // Pre-fill the zero
+            table.rows[3].cells[w - 1].className = "val-fixed";
+            for(let c=1; c<w; c++) table.rows[3].cells[c].className += " sub-line"; // Line before addition
+            
+            sequence.push({ type: 'input', row: 3, col: w - p2Str.length - 1, ans: p2Str, size: p2Str.length, dir: 'rtl', msg: `Step 2: Multiply ${n1} × ${n2Str[0]} (Zero is placed for you!)` });
+            
+            // Step 3: Final Addition
+            sequence.push({ type: 'input', row: 4, col: w - ansStr.length, ans: ansStr, size: ansStr.length, dir: 'rtl', msg: `Step 3: Add them together!` });
+            
+            setupInputSequence(table, sequence);
+        }
+
+        // --- SHARED INPUT SEQUENCE HANDLER ---
         function setupInputSequence(table, sequence) {
             let seqIdx = 0;
 
             function loadNextStep() {
-                if (seqIdx >= sequence.length) return; 
-
+                if (seqIdx >= sequence.length) { handleProblemCompletion(); return; }
                 let step = sequence[seqIdx];
                 activeInputGroup = []; 
+                
+                if(step.msg) document.getElementById('feedback').innerText = step.msg;
 
                 if (step.type === 'input') {
                     let row = table.rows[step.row];
-                    let expectedAnsStr = step.ans;
                     
                     for (let i = 0; i < step.size; i++) {
-                        let colIdx = step.col + i;
-                        let cell = row.cells[colIdx];
-                        
+                        let cell = row.cells[step.col + i];
                         let input = document.createElement('input');
-                        // THE FIX: Changed to text and added numeric input mode
-                        input.type = 'text'; 
-                        input.inputMode = 'numeric';
-                        input.className = 'grid-input active';
-                        input.maxLength = 1; 
-                        
-                        input.dataset.ans = expectedAnsStr[i]; 
-                        
+                        input.type = 'text'; input.inputMode = 'numeric'; input.className = 'grid-input active'; input.maxLength = 1; 
+                        input.dataset.ans = step.ans[i]; 
                         cell.appendChild(input);
                         activeInputGroup.push(input);
                     }
                     
                     activeInputGroup.forEach((inp, idx) => {
                         inp.addEventListener('input', () => {
-                            // Only allow numbers
-                            inp.value = inp.value.replace(/[^0-9]/g, '');
+                            inp.value = inp.value.replace(/[^0-9]/g, ''); // Ensure only numbers
                             
-                            if (inp.value.length === 1 && idx < activeInputGroup.length - 1) {
-                                activeInputGroup[idx+1].focus(); 
+                            if (inp.value.length === 1) {
+                                // Auto-focus routing
+                                if (step.dir === 'rtl' && idx > 0) activeInputGroup[idx-1].focus();
+                                else if (step.dir === 'ltr' && idx < activeInputGroup.length - 1) activeInputGroup[idx+1].focus();
                             }
-                            if (inp.value.length === 1 && idx === activeInputGroup.length - 1) {
-                                checkActiveGroup(); 
-                            }
+                            
+                            // Check if all boxes are filled
+                            let allFilled = true;
+                            activeInputGroup.forEach(i => { if(i.value === "") allFilled = false; });
+                            if (allFilled) checkActiveGroup();
                         });
                     });
                     
-                    activeInputGroup[0].focus(); 
+                    // Initial Focus
+                    if(step.dir === 'rtl') activeInputGroup[activeInputGroup.length - 1].focus();
+                    else activeInputGroup[0].focus();
                 
                 } else if (step.type === 'bringdown') {
-                    let row = table.rows[step.row];
-                    let cell = row.cells[step.col];
-                    cell.innerText = step.ans;
-                    cell.className += " val-fixed";
-                    
+                    let cell = table.rows[step.row].cells[step.col];
+                    cell.innerText = step.ans; cell.className += " val-fixed";
                     document.getElementById('feedback').innerText = `Bring down the ${step.ans}.`;
-                    
-                    setTimeout(() => {
-                        seqIdx++;
-                        document.getElementById('feedback').innerText = "";
-                        loadNextStep();
-                    }, 800);
-                
+                    setTimeout(() => { seqIdx++; loadNextStep(); }, 800);
                 } else if (step.type === 'finalrem') {
-                    let row = table.rows[step.row];
-                    let cell = row.cells[step.col];
-                    if(step.ans === "0") {
-                        cell.innerText = step.ans;
-                        cell.className += " rem-0";
-                    }
+                    let cell = table.rows[step.row].cells[step.col];
+                    if(step.ans === "0") { cell.innerText = step.ans; cell.className += " rem-0"; }
                     handleProblemCompletion();
                 }
             }
@@ -270,27 +315,19 @@
             function checkActiveGroup() {
                 totalStepsTaken++;
                 let allCorrect = true;
-                
-                activeInputGroup.forEach(inp => {
-                    if (inp.value !== inp.dataset.ans) allCorrect = false;
-                });
+                activeInputGroup.forEach(inp => { if (inp.value !== inp.dataset.ans) allCorrect = false; });
                 
                 if (allCorrect) {
                     document.getElementById('feedback').innerText = "Correct!";
                     document.getElementById('feedback').style.color = "var(--success)";
                     
                     activeInputGroup.forEach(inp => {
-                        let cell = inp.parentElement;
-                        cell.innerText = inp.value;
-                        cell.className += " val-fixed";
+                        inp.parentElement.innerText = inp.value;
+                        inp.parentElement.className += " val-fixed";
                     });
                     
                     seqIdx++;
-                    setTimeout(() => {
-                         document.getElementById('feedback').innerText = "";
-                         loadNextStep();
-                    }, 500);
-                    
+                    setTimeout(() => { document.getElementById('feedback').innerText = ""; loadNextStep(); }, 500);
                 } else {
                     totalMistakes++;
                     document.getElementById('stat-mistakes').innerText = totalMistakes;
@@ -298,39 +335,33 @@
                     document.getElementById('feedback').style.color = "var(--error)";
                     
                     activeInputGroup.forEach(inp => inp.value = "");
-                    activeInputGroup[0].focus();
+                    // Refocus correctly after a wipe
+                    if(sequence[seqIdx].dir === 'rtl') activeInputGroup[activeInputGroup.length - 1].focus();
+                    else activeInputGroup[0].focus();
                 }
             }
-
             loadNextStep(); 
         }
 
         function handleProblemCompletion() {
-            document.getElementById('feedback').innerText = `Finished! ${dividend} ÷ ${divisor} = ${finalAnswer} 🎉`;
+            let symbol = quizMode === 'div' ? '÷' : '×';
+            document.getElementById('feedback').innerText = `Finished! ${num1} ${symbol} ${num2} = ${finalAnswer} 🎉`;
             document.getElementById('feedback').style.color = "var(--success)";
             
             setTimeout(() => {
-                if (currentProblemNum >= maxProblems) {
-                    showEndScreen();
-                } else {
-                    currentProblemNum++;
-                    generateNewProblem();
-                }
+                if (currentProblemNum >= maxProblems) showEndScreen();
+                else { currentProblemNum++; generateNewProblem(); }
             }, 2500);
         }
 
         function createRow(table, rowId, numCells) {
             let row = table.insertRow(-1);
-            row.id = rowId;
-            for (let i = 0; i < numCells; i++) { row.insertCell(-1); }
+            for (let i = 0; i < numCells; i++) row.insertCell(-1); 
         }
 
         function showEndScreen() {
-            const endTime = new Date();
-            const timeDiff = Math.floor((endTime - startTime) / 1000); 
-            const minutes = Math.floor(timeDiff / 60);
-            const seconds = timeDiff % 60;
-            formattedTimeTaken = `${minutes}m ${seconds}s`;
+            const timeDiff = Math.floor((new Date() - startTime) / 1000); 
+            formattedTimeTaken = `${Math.floor(timeDiff / 60)}m ${timeDiff % 60}s`;
 
             document.getElementById('quiz-screen').style.display = 'none';
             document.getElementById('end-screen').style.display = 'block';
@@ -346,31 +377,21 @@
 
         function saveResults() {
             const btn = document.getElementById('save-btn');
-            btn.innerText = "Saving to Database...";
-            btn.disabled = true;
-
-            let grade = document.getElementById('final-score').innerText;
+            btn.innerText = "Saving to Database..."; btn.disabled = true;
 
             const data = {
-                name: studentName,
+                name: `[${quizMode.toUpperCase()}] ` + studentName, // Tells you which quiz they took in the Google Sheet!
                 attempts: totalStepsTaken, 
                 correct: maxProblems,
-                score: grade,
+                score: document.getElementById('final-score').innerText,
                 time: formattedTimeTaken
             };
 
             fetch(SCRIPT_URL, {
-                method: "POST",
-                headers: { "Content-Type": "text/plain" }, 
-                body: JSON.stringify(data)
+                method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(data)
             })
-            .then(response => alert("Results saved!"))
-            .then(() => location.reload())
-            .catch(error => {
-                alert("Error saving. Check internet.");
-                btn.innerText = "Save Results to Teacher";
-                btn.disabled = false;
-            });
+            .then(() => { alert("Results saved!"); location.reload(); })
+            .catch(() => { alert("Error saving. Check internet."); btn.innerText = "Save Results to Teacher"; btn.disabled = false; });
         }
     </script>
 </body>
