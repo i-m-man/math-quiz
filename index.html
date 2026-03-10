@@ -66,7 +66,7 @@
         <input type="text" id="student-name" placeholder="Your Name" style="font-size: 1.3rem; padding: 10px; border-radius: 8px; border: 2px solid #e2e8f0; width: 80%; margin-bottom: 20px;" autofocus>
         
         <div style="display: flex; gap: 15px;">
-            <button class="btn-mult" onclick="startQuiz('mult')">✖️ Multiplication (3x2)</button>
+            <button class="btn-mult" onclick="startQuiz('mult')">✖️ Multiplication</button>
             <button onclick="startQuiz('div')">➗ Long Division</button>
         </div>
     </div>
@@ -135,22 +135,18 @@
             document.getElementById('main-grid').innerHTML = ""; 
 
             if (quizMode === 'div') {
-                // Division Logic
-                num2 = Math.floor(Math.random() * 8) + 2; // Divisor (1 digit)
-                finalAnswer = Math.floor(Math.random() * 80) + 11; // Quotient (11-90)
-                num1 = num2 * finalAnswer; // Dividend
+                num2 = Math.floor(Math.random() * 8) + 2; 
+                finalAnswer = Math.floor(Math.random() * 80) + 11; 
+                num1 = num2 * finalAnswer; 
                 setupDivisionGrid(num1.toString(), num2);
             } else {
-                // Multiplication Logic
-                num1 = Math.floor(Math.random() * 900) + 100; // 3 digits
-                // Generate 2 digit number without 0s to keep the grid perfectly clean
+                num1 = Math.floor(Math.random() * 900) + 100; 
                 num2 = (Math.floor(Math.random() * 9) + 1) * 10 + (Math.floor(Math.random() * 9) + 1); 
                 finalAnswer = num1 * num2;
                 setupMultiplicationGrid(num1, num2);
             }
         }
 
-        // --- DIVISION ENGINE ---
         function setupDivisionGrid(dividendStr, div) {
             const table = document.getElementById('main-grid');
             createRow(table, 'ans-row', dividendStr.length + 2); 
@@ -207,25 +203,20 @@
             setupInputSequence(table, sequence);
         }
 
-        // --- MULTIPLICATION ENGINE ---
         function setupMultiplicationGrid(n1, n2) {
             const table = document.getElementById('main-grid');
             let n1Str = n1.toString();
             let n2Str = n2.toString();
             let ansStr = finalAnswer.toString();
-            
-            // Grid width
             let w = ansStr.length + 1; 
             
             for(let i=0; i<5; i++) createRow(table, `m-row${i}`, w);
             
-            // Draw Num 1 (Top)
             for(let i=0; i<n1Str.length; i++) {
                 let cell = table.rows[0].cells[w - n1Str.length + i];
                 cell.innerText = n1Str[i]; cell.className = "val-fixed";
             }
             
-            // Draw Num 2 and X sign (Row 2)
             table.rows[1].cells[w - n2Str.length - 1].innerText = '×';
             table.rows[1].cells[w - n2Str.length - 1].className = "val-fixed";
             for(let i=0; i<n2Str.length; i++) {
@@ -236,27 +227,23 @@
             
             let sequence = [];
             
-            // Step 1: Partial Product 1 (Top digit * Bottom Ones)
             let p1 = n1 * parseInt(n2Str[1]);
             let p1Str = p1.toString();
             sequence.push({ type: 'input', row: 2, col: w - p1Str.length, ans: p1Str, size: p1Str.length, dir: 'rtl', msg: `Step 1: Multiply ${n1} × ${n2Str[1]}` });
             
-            // Step 2: Partial Product 2 (Top digit * Bottom Tens)
             let p2 = n1 * parseInt(n2Str[0]);
             let p2Str = p2.toString();
-            table.rows[3].cells[w - 1].innerText = '0'; // Pre-fill the zero
+            table.rows[3].cells[w - 1].innerText = '0'; 
             table.rows[3].cells[w - 1].className = "val-fixed";
-            for(let c=1; c<w; c++) table.rows[3].cells[c].className += " sub-line"; // Line before addition
+            for(let c=1; c<w; c++) table.rows[3].cells[c].className += " sub-line"; 
             
             sequence.push({ type: 'input', row: 3, col: w - p2Str.length - 1, ans: p2Str, size: p2Str.length, dir: 'rtl', msg: `Step 2: Multiply ${n1} × ${n2Str[0]} (Zero is placed for you!)` });
             
-            // Step 3: Final Addition
             sequence.push({ type: 'input', row: 4, col: w - ansStr.length, ans: ansStr, size: ansStr.length, dir: 'rtl', msg: `Step 3: Add them together!` });
             
             setupInputSequence(table, sequence);
         }
 
-        // --- SHARED INPUT SEQUENCE HANDLER ---
         function setupInputSequence(table, sequence) {
             let seqIdx = 0;
 
@@ -281,22 +268,19 @@
                     
                     activeInputGroup.forEach((inp, idx) => {
                         inp.addEventListener('input', () => {
-                            inp.value = inp.value.replace(/[^0-9]/g, ''); // Ensure only numbers
+                            inp.value = inp.value.replace(/[^0-9]/g, ''); 
                             
                             if (inp.value.length === 1) {
-                                // Auto-focus routing
                                 if (step.dir === 'rtl' && idx > 0) activeInputGroup[idx-1].focus();
                                 else if (step.dir === 'ltr' && idx < activeInputGroup.length - 1) activeInputGroup[idx+1].focus();
                             }
                             
-                            // Check if all boxes are filled
                             let allFilled = true;
                             activeInputGroup.forEach(i => { if(i.value === "") allFilled = false; });
                             if (allFilled) checkActiveGroup();
                         });
                     });
                     
-                    // Initial Focus
                     if(step.dir === 'rtl') activeInputGroup[activeInputGroup.length - 1].focus();
                     else activeInputGroup[0].focus();
                 
@@ -321,9 +305,11 @@
                     document.getElementById('feedback').innerText = "Correct!";
                     document.getElementById('feedback').style.color = "var(--success)";
                     
+                    // THE FIX: Storing the parent cell memory before converting the input!
                     activeInputGroup.forEach(inp => {
-                        inp.parentElement.innerText = inp.value;
-                        inp.parentElement.className += " val-fixed";
+                        let cell = inp.parentElement; 
+                        cell.innerText = inp.value;
+                        cell.className += " val-fixed";
                     });
                     
                     seqIdx++;
@@ -335,7 +321,6 @@
                     document.getElementById('feedback').style.color = "var(--error)";
                     
                     activeInputGroup.forEach(inp => inp.value = "");
-                    // Refocus correctly after a wipe
                     if(sequence[seqIdx].dir === 'rtl') activeInputGroup[activeInputGroup.length - 1].focus();
                     else activeInputGroup[0].focus();
                 }
@@ -380,7 +365,7 @@
             btn.innerText = "Saving to Database..."; btn.disabled = true;
 
             const data = {
-                name: `[${quizMode.toUpperCase()}] ` + studentName, // Tells you which quiz they took in the Google Sheet!
+                name: `[${quizMode.toUpperCase()}] ` + studentName, 
                 attempts: totalStepsTaken, 
                 correct: maxProblems,
                 score: document.getElementById('final-score').innerText,
