@@ -3,122 +3,177 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Math Mastery</title>
+    <title>Guided Long Division</title>
     <style>
         :root { --primary: #4a90e2; --success: #48bb78; --error: #f56565; }
         body { font-family: 'Segoe UI', sans-serif; background: #f7fafc; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box;}
-        .card { background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; width: 100%; max-width: 450px; margin-bottom: 20px; }
-        #question { font-size: 3rem; font-weight: bold; margin: 20px 0; color: #2d3748; letter-spacing: 2px; }
-        input { font-size: 1.8rem; width: 80%; text-align: center; border: 2px solid #e2e8f0; border-radius: 10px; padding: 10px; margin-bottom: 15px; }
+        .card { background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 500px; margin-bottom: 20px; }
+        
+        /* New Styles for the Chat/Log layout */
+        .history-log { background: #edf2f7; padding: 15px; border-radius: 10px; margin-bottom: 20px; max-height: 300px; overflow-y: auto; font-size: 1.1rem; color: #2d3748; }
+        .log-entry { margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
+        .log-correct { color: var(--success); font-weight: bold; float: right; }
+        
+        #question-header { font-size: 2.5rem; font-weight: bold; margin: 10px 0; color: #2d3748; text-align: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;}
+        #current-prompt { font-size: 1.3rem; font-weight: bold; color: var(--primary); margin-bottom: 15px; }
+        
+        input { font-size: 1.5rem; width: 100%; text-align: center; border: 2px solid #e2e8f0; border-radius: 10px; padding: 10px; margin-bottom: 15px; box-sizing: border-box;}
         button { background: var(--primary); color: white; border: none; padding: 12px 20px; font-size: 1.1rem; border-radius: 8px; cursor: pointer; width: 100%; margin-bottom: 10px; transition: 0.2s;}
         button:hover { opacity: 0.9; }
         .save-btn { background: var(--success); font-size: 1.3rem; padding: 15px; }
         .stats { display: flex; justify-content: space-between; background: #edf2f7; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; color: #4a5568;}
-        .progress-text { font-size: 1.2rem; color: var(--primary); font-weight: bold; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
     <div class="card" id="setup-screen">
-        <h2>Advanced Multiplication</h2>
-        <p>Complete <b>10 questions</b>. Mistakes mean you try again. <br><br><i>Note: You are being timed!</i> ⏱️</p>
+        <h2 style="text-align: center;">Guided Long Division</h2>
+        <p>Complete <b>5 problems</b>. We will guide you step-by-step through the process. <br><br><i>Time is ticking!</i> ⏱️</p>
         <input type="text" id="student-name" placeholder="Your Name" autofocus>
         <button onclick="startQuiz()">Start Challenge</button>
     </div>
 
     <div class="card" id="quiz-screen" style="display: none;">
-        <div class="progress-text" id="progress-text">Question 1 of 10</div>
-        
         <div class="stats">
-            <div>Total Tries: <span id="stat-attempts">0</span></div>
-            <div>Accuracy: <span id="stat-score">100%</span></div>
+            <div>Problem: <span id="stat-problem">1 / 5</span></div>
+            <div>Mistakes: <span id="stat-mistakes">0</span></div>
         </div>
         
-        <div id="question">? × ?</div>
-        <input type="number" id="answer" placeholder="Your Answer">
-        <button onclick="checkAnswer()" id="submit-btn">Submit Answer</button>
+        <div id="question-header">? ÷ ?</div>
         
-        <div id="feedback" style="margin-top: 15px; font-size: 1.2rem; font-weight: bold; height: 30px;"></div>
+        <div class="history-log" id="history-log">
+            </div>
+
+        <div id="current-prompt">Generating problem...</div>
+        <input type="number" id="answer" placeholder="Type here...">
+        <button onclick="checkStep()" id="submit-btn">Submit Step</button>
+        
+        <div id="feedback" style="margin-top: 10px; font-size: 1.1rem; font-weight: bold; height: 25px; text-align: center;"></div>
     </div>
 
     <div class="card" id="end-screen" style="display: none;">
-        <h2>Set Complete! 🎉</h2>
-        <div class="stats" style="flex-direction: column; gap: 10px; text-align: left;">
+        <h2 style="text-align: center;">All Sets Complete! 🎉</h2>
+        <div class="stats" style="flex-direction: column; gap: 10px;">
             <div>⏱️ Time Taken: <span id="final-time" style="float: right;">0</span></div>
-            <div>🎯 Total Tries: <span id="final-attempts" style="float: right;">0</span></div>
-            <div>📊 Final Accuracy: <span id="final-score" style="float: right;">0%</span></div>
+            <div>❌ Total Mistakes: <span id="final-mistakes" style="float: right;">0</span></div>
+            <div>📊 Grade: <span id="final-score" style="float: right;">0%</span></div>
         </div>
         <button class="save-btn" onclick="saveResults()" id="save-btn">Save Results to Teacher</button>
     </div>
 
     <script>
         // 🚨 REPLACE THIS WITH YOUR GOOGLE APPS SCRIPT URL 🚨
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrJwT2sjjRAZj6RFZEI6EcEFCLEesntJtAGWcj8Uz2ck2-UvVXqA8T0OAc3HLnsun9aw/exec"; 
+        const SCRIPT_URL = "YOUR_WEB_APP_URL_HERE"; 
 
-        let num1, num2, correctAnswer;
         let studentName = "";
-        
-        // Session tracking
-        let currentQuestion = 1;
-        const maxQuestions = 10;
-        let totalAttempts = 0;
-        
-        // Timer variables
         let startTime;
         let formattedTimeTaken = "";
+        
+        // Session tracking
+        let currentProblemNum = 1;
+        const maxProblems = 5; // Reduced to 5 because division has many steps
+        let totalMistakes = 0;
+        let totalStepsTaken = 0;
+        
+        // Step Logic Array
+        let stepSequence = [];
+        let currentStepIndex = 0;
 
         function startQuiz() {
             const nameInput = document.getElementById('student-name').value;
-            if (nameInput.trim() === "") {
-                alert("Please enter a name!");
-                return;
-            }
+            if (nameInput.trim() === "") { alert("Please enter a name!"); return; }
             studentName = nameInput;
             document.getElementById('setup-screen').style.display = 'none';
             document.getElementById('quiz-screen').style.display = 'block';
-            
-            // Start the clock!
             startTime = new Date(); 
-            
-            generateQuestion();
+            generateNewProblem();
         }
 
-        function generateQuestion() {
-            num1 = Math.floor(Math.random() * 900) + 100; // 100 to 999
-            num2 = Math.floor(Math.random() * 90) + 10;   // 10 to 99
-            correctAnswer = num1 * num2;
+        function generateNewProblem() {
+            // Generate a 1-digit divisor (2 to 9) and a random answer to guarantee whole numbers for now
+            let divisor = Math.floor(Math.random() * 8) + 2; 
+            let finalAnswer = Math.floor(Math.random() * 80) + 11; // 11 to 90
+            let dividend = (divisor * finalAnswer).toString();
             
-            document.getElementById('progress-text').innerText = `Question ${currentQuestion} of ${maxQuestions}`;
-            document.getElementById('question').innerText = `${num1} × ${num2}`;
+            document.getElementById('question-header').innerText = `${dividend} ÷ ${divisor}`;
+            document.getElementById('history-log').innerHTML = ""; // Clear log
+            document.getElementById('stat-problem').innerText = `${currentProblemNum} / ${maxProblems}`;
+            
+            stepSequence = [];
+            let currentStr = "";
+            
+            // Build the conversational steps
+            for (let i = 0; i < dividend.length; i++) {
+                currentStr += dividend[i];
+                let currentNum = parseInt(currentStr, 10);
+                
+                // If the number is big enough to divide, or we are at the very last digit
+                if (currentNum >= divisor || (i === dividend.length - 1)) {
+                    let q = Math.floor(currentNum / divisor);
+                    
+                    if (i > 0) stepSequence.push({ msg: `Bring down the ${dividend[i]}. What is ${currentNum} ÷ ${divisor}?`, ans: q });
+                    else stepSequence.push({ msg: `Look at the first part: ${currentNum}. What is ${currentNum} ÷ ${divisor}?`, ans: q });
+                    
+                    let prod = q * divisor;
+                    stepSequence.push({ msg: `Multiply: ${divisor} × ${q} = ?`, ans: prod });
+                    
+                    let rem = currentNum - prod;
+                    stepSequence.push({ msg: `Subtract: ${currentNum} - ${prod} = ?`, ans: rem });
+                    
+                    currentStr = rem === 0 ? "" : rem.toString();
+                }
+            }
+            stepSequence.push({ msg: `Awesome! What is the final answer for ${dividend} ÷ ${divisor}?`, ans: finalAnswer });
+            
+            currentStepIndex = 0;
+            loadNextStep();
+        }
+
+        function loadNextStep() {
+            document.getElementById('current-prompt').innerText = stepSequence[currentStepIndex].msg;
             document.getElementById('answer').value = '';
-            document.getElementById('feedback').innerText = '';
             document.getElementById('answer').focus();
         }
 
-        function checkAnswer() {
+        function checkStep() {
             const val = document.getElementById('answer').value;
             if (val === "") return;
 
-            totalAttempts++;
-            const isCorrect = (parseInt(val) === correctAnswer);
-
-            const accuracy = Math.round((currentQuestion / totalAttempts) * 100);
-            document.getElementById('stat-attempts').innerText = totalAttempts;
-            document.getElementById('stat-score').innerText = accuracy + "%";
-
+            totalStepsTaken++;
+            const expectedAnswer = stepSequence[currentStepIndex].ans;
+            const isCorrect = (parseInt(val) === expectedAnswer);
             const feedback = document.getElementById('feedback');
-            
+
             if (isCorrect) {
                 feedback.innerText = "Correct! 🌟";
                 feedback.style.color = "var(--success)";
                 
-                if (currentQuestion >= maxQuestions) {
-                    setTimeout(showEndScreen, 1000);
+                // Add to history log
+                const logDiv = document.getElementById('history-log');
+                logDiv.innerHTML += `<div class="log-entry">${stepSequence[currentStepIndex].msg} <b>${val}</b> <span class="log-correct">✓</span></div>`;
+                logDiv.scrollTop = logDiv.scrollHeight; // Auto-scroll to bottom
+
+                currentStepIndex++;
+
+                if (currentStepIndex >= stepSequence.length) {
+                    // Problem finished!
+                    if (currentProblemNum >= maxProblems) {
+                        setTimeout(showEndScreen, 1000);
+                    } else {
+                        currentProblemNum++;
+                        feedback.innerText = "Problem complete! Loading next...";
+                        setTimeout(generateNewProblem, 1500);
+                    }
                 } else {
-                    currentQuestion++;
-                    setTimeout(generateQuestion, 1200);
+                    // Load next step in the sequence
+                    setTimeout(() => {
+                        feedback.innerText = "";
+                        loadNextStep();
+                    }, 500);
                 }
             } else {
+                totalMistakes++;
+                document.getElementById('stat-mistakes').innerText = totalMistakes;
                 feedback.innerText = "Incorrect. Try again! ❌";
                 feedback.style.color = "var(--error)";
                 document.getElementById('answer').value = '';
@@ -127,9 +182,8 @@
         }
 
         function showEndScreen() {
-            // Stop the clock and calculate time
             const endTime = new Date();
-            const timeDiff = Math.floor((endTime - startTime) / 1000); // total seconds
+            const timeDiff = Math.floor((endTime - startTime) / 1000); 
             const minutes = Math.floor(timeDiff / 60);
             const seconds = timeDiff % 60;
             formattedTimeTaken = `${minutes}m ${seconds}s`;
@@ -137,12 +191,13 @@
             document.getElementById('quiz-screen').style.display = 'none';
             document.getElementById('end-screen').style.display = 'block';
             
-            const accuracy = Math.round((maxQuestions / totalAttempts) * 100);
+            // Calculate a grade based on steps vs mistakes
+            let grade = Math.round(((totalStepsTaken - totalMistakes) / totalStepsTaken) * 100);
+            if (grade < 0) grade = 0;
             
-            // Update final screen UI
             document.getElementById('final-time').innerText = formattedTimeTaken;
-            document.getElementById('final-attempts').innerText = totalAttempts;
-            document.getElementById('final-score').innerText = accuracy + "%";
+            document.getElementById('final-mistakes').innerText = totalMistakes;
+            document.getElementById('final-score').innerText = grade + "%";
         }
 
         function saveResults() {
@@ -150,14 +205,13 @@
             btn.innerText = "Saving to Database...";
             btn.disabled = true;
 
-            const accuracy = Math.round((maxQuestions / totalAttempts) * 100) + "%";
+            let grade = Math.round(((totalStepsTaken - totalMistakes) / totalStepsTaken) * 100);
 
-            // Add the time data to the package we send to Google
             const data = {
                 name: studentName,
-                attempts: totalAttempts,
-                correct: maxQuestions,
-                score: accuracy,
+                attempts: totalStepsTaken, 
+                correct: maxProblems,
+                score: grade + "%",
                 time: formattedTimeTaken
             };
 
@@ -166,12 +220,10 @@
                 headers: { "Content-Type": "text/plain" }, 
                 body: JSON.stringify(data)
             })
-            .then(response => {
-                alert("Results saved successfully! Great job.");
-                location.reload(); 
-            })
+            .then(response => alert("Results saved!"))
+            .then(() => location.reload())
             .catch(error => {
-                alert("Error saving results. Check your internet connection.");
+                alert("Error saving. Check internet.");
                 btn.innerText = "Save Results to Teacher";
                 btn.disabled = false;
             });
@@ -179,11 +231,8 @@
 
         document.getElementById('answer').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                if (document.getElementById('quiz-screen').style.display === 'block') {
-                    checkAnswer();
-                } else if (document.getElementById('setup-screen').style.display !== 'none') {
-                    startQuiz();
-                }
+                if (document.getElementById('quiz-screen').style.display === 'block') checkStep();
+                else if (document.getElementById('setup-screen').style.display !== 'none') startQuiz();
             }
         });
     </script>
