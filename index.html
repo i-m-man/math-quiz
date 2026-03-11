@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visual Math Mastery</title>
     <style>
-        :root { --primary: #4a90e2; --mult: #ed8936; --success: #48bb78; --error: #f56565; --grid-line: #cbd5e0;}
+        :root { --primary: #4a90e2; --mult: #ed8936; --frac: #9f7aea; --success: #48bb78; --error: #f56565; --grid-line: #cbd5e0;}
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f7fafc; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
         
         .card { background: white; padding: 2.5rem; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 100%; max-width: 600px; margin-bottom: 20px; box-sizing: border-box;}
@@ -17,8 +17,6 @@
         /* Division Specific */
         .divisor { border-right: 2px solid #2d3748; padding-right: 5px; color: #4a5568;}
         .dividend-box { border-bottom: 2px solid #2d3748;}
-        
-        /* Subtraction / Addition Lines */
         .sub-line { border-bottom: 2px solid #2d3748;}
         
         /* Interactive Inputs */
@@ -38,9 +36,11 @@
         .grid-input:focus { outline: 2px solid var(--primary); background: #e6f3ff;}
         .grid-input.active { border-color: var(--primary); background: #e6f3ff; }
         
-        /* Multiplication focuses use a different color for fun */
+        /* Mode Colors */
         .mult-mode .grid-input:focus { outline: 2px solid var(--mult); background: #fffaf0;}
         .mult-mode .grid-input.active { border-color: var(--mult); background: #fffaf0;}
+        .frac-mode .grid-input:focus { outline: 2px solid var(--frac); background: #faf5ff;}
+        .frac-mode .grid-input.active { border-color: var(--frac); background: #faf5ff;}
         
         /* Hide Arrows on inputs */
         .grid-input::-webkit-outer-spin-button,
@@ -50,10 +50,11 @@
         .val-fixed { color: #2d3748; font-weight: bold; }
         .rem-0 { color: var(--success); font-weight: bold; font-size: 2.8rem; }
         
-        button { background: var(--primary); color: white; border: none; padding: 15px 20px; font-size: 1.2rem; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 15px; transition: 0.2s; font-weight: bold;}
+        button { background: var(--primary); color: white; border: none; padding: 15px 20px; font-size: 1.1rem; border-radius: 8px; cursor: pointer; margin-top: 15px; transition: 0.2s; font-weight: bold;}
         button:hover { opacity: 0.9; transform: translateY(-2px); }
         .btn-mult { background: var(--mult); }
-        .save-btn { background: var(--success); font-size: 1.3rem; padding: 15px; margin-top: 0;}
+        .btn-frac { background: var(--frac); width: 100%; margin-top: 5px;}
+        .save-btn { background: var(--success); font-size: 1.3rem; padding: 15px; width: 100%; margin-top: 0;}
         
         .stats { display: flex; justify-content: space-between; background: #edf2f7; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-weight: bold; color: #4a5568;}
     </style>
@@ -65,9 +66,10 @@
         <p>Enter your name and select your challenge! <br><br><i>Note: You are being timed!</i> ⏱️</p>
         <input type="text" id="student-name" placeholder="Your Name" style="font-size: 1.3rem; padding: 10px; border-radius: 8px; border: 2px solid #e2e8f0; width: 80%; margin-bottom: 20px;" autofocus>
         
-        <div style="display: flex; gap: 15px;">
-            <button class="btn-mult" onclick="startQuiz('mult')">✖️ Multiplication</button>
-            <button onclick="startQuiz('div')">➗ Long Division</button>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
+            <button class="btn-mult" onclick="startQuiz('mult')" style="width: 45%;">✖️ Multiplication</button>
+            <button onclick="startQuiz('div')" style="width: 45%;">➗ Division</button>
+            <button class="btn-frac" onclick="startQuiz('div-frac')">➗ Division (Mixed Fractions)</button>
         </div>
     </div>
 
@@ -104,7 +106,7 @@
         let startTime, formattedTimeTaken;
         let currentProblemNum = 1, maxProblems = 5, totalMistakes = 0, totalStepsTaken = 0;
         
-        let num1, num2, finalAnswer;
+        let num1, num2, finalAnswer, remainder;
         let activeInputGroup = [];
 
         function startQuiz(mode) {
@@ -116,11 +118,17 @@
             document.getElementById('setup-screen').style.display = 'none';
             document.getElementById('quiz-screen').style.display = 'block';
             
+            const grid = document.getElementById('main-grid');
+            grid.className = "math-grid"; // Reset classes
+            
             if (mode === 'mult') {
-                document.getElementById('quiz-title').innerText = "Multiplication Mastery";
-                document.getElementById('main-grid').classList.add('mult-mode');
+                document.getElementById('quiz-title').innerText = "Multiplication";
+                grid.classList.add('mult-mode');
+            } else if (mode === 'div-frac') {
+                document.getElementById('quiz-title').innerText = "Mixed Fractions";
+                grid.classList.add('frac-mode');
             } else {
-                document.getElementById('quiz-title').innerText = "Long Division Mastery";
+                document.getElementById('quiz-title').innerText = "Long Division";
             }
             
             startTime = new Date(); 
@@ -132,13 +140,25 @@
             activeInputGroup = [];
             document.getElementById('stat-problem').innerText = `${currentProblemNum} / ${maxProblems}`;
             document.getElementById('feedback').innerText = "";
-            document.getElementById('main-grid').innerHTML = ""; 
+            document.getElementById('grid-container').innerHTML = '<table class="math-grid" id="main-grid"></table>'; // Reset completely
+            
+            const grid = document.getElementById('main-grid');
+            if (quizMode === 'mult') grid.classList.add('mult-mode');
+            if (quizMode === 'div-frac') grid.classList.add('frac-mode');
 
-            if (quizMode === 'div') {
-                num2 = Math.floor(Math.random() * 8) + 2; 
-                finalAnswer = Math.floor(Math.random() * 80) + 11; 
-                num1 = num2 * finalAnswer; 
-                setupDivisionGrid(num1.toString(), num2);
+            if (quizMode === 'div' || quizMode === 'div-frac') {
+                num2 = Math.floor(Math.random() * 8) + 2; // Divisor (2-9)
+                finalAnswer = Math.floor(Math.random() * 80) + 11; // Quotient (11-90)
+                
+                if (quizMode === 'div-frac') {
+                    // Force a remainder between 1 and (divisor - 1)
+                    remainder = Math.floor(Math.random() * (num2 - 1)) + 1;
+                } else {
+                    remainder = 0;
+                }
+                
+                num1 = (num2 * finalAnswer) + remainder; // Calculate dividend
+                setupDivisionGrid(num1.toString(), num2, quizMode === 'div-frac');
             } else {
                 num1 = Math.floor(Math.random() * 900) + 100; 
                 num2 = (Math.floor(Math.random() * 9) + 1) * 10 + (Math.floor(Math.random() * 9) + 1); 
@@ -147,7 +167,7 @@
             }
         }
 
-        function setupDivisionGrid(dividendStr, div) {
+        function setupDivisionGrid(dividendStr, div, isFracMode) {
             const table = document.getElementById('main-grid');
             createRow(table, 'ans-row', dividendStr.length + 2); 
             createRow(table, 'div-row', dividendStr.length + 2); 
@@ -196,7 +216,11 @@
                          sequence.push({ type: 'bringdown', row: remRowIndex, col: rStartCol + rStr.length, ans: dividendStr[i+1] });
                          currValStr = (rem === 0) ? "" : rem.toString();
                     } else {
-                        sequence.push({ type: 'finalrem', row: remRowIndex, col: rStartCol, ans: rem.toString() });
+                         if (isFracMode) {
+                             sequence.push({ type: 'build-fraction', q: finalAnswer.toString(), r: rem.toString(), d: div.toString() });
+                         } else {
+                             sequence.push({ type: 'finalrem', row: remRowIndex, col: rStartCol, ans: rem.toString() });
+                         }
                     }
                 }
             }
@@ -205,40 +229,31 @@
 
         function setupMultiplicationGrid(n1, n2) {
             const table = document.getElementById('main-grid');
-            let n1Str = n1.toString();
-            let n2Str = n2.toString();
-            let ansStr = finalAnswer.toString();
+            let n1Str = n1.toString(); let n2Str = n2.toString(); let ansStr = finalAnswer.toString();
             let w = ansStr.length + 1; 
-            
             for(let i=0; i<5; i++) createRow(table, `m-row${i}`, w);
             
             for(let i=0; i<n1Str.length; i++) {
-                let cell = table.rows[0].cells[w - n1Str.length + i];
-                cell.innerText = n1Str[i]; cell.className = "val-fixed";
+                table.rows[0].cells[w - n1Str.length + i].innerText = n1Str[i]; 
+                table.rows[0].cells[w - n1Str.length + i].className = "val-fixed";
             }
-            
             table.rows[1].cells[w - n2Str.length - 1].innerText = '×';
             table.rows[1].cells[w - n2Str.length - 1].className = "val-fixed";
             for(let i=0; i<n2Str.length; i++) {
-                let cell = table.rows[1].cells[w - n2Str.length + i];
-                cell.innerText = n2Str[i]; cell.className = "val-fixed";
+                table.rows[1].cells[w - n2Str.length + i].innerText = n2Str[i]; 
+                table.rows[1].cells[w - n2Str.length + i].className = "val-fixed";
             }
             for(let c=1; c<w; c++) table.rows[1].cells[c].className += " sub-line";
             
             let sequence = [];
-            
-            let p1 = n1 * parseInt(n2Str[1]);
-            let p1Str = p1.toString();
+            let p1 = n1 * parseInt(n2Str[1]); let p1Str = p1.toString();
             sequence.push({ type: 'input', row: 2, col: w - p1Str.length, ans: p1Str, size: p1Str.length, dir: 'rtl', msg: `Step 1: Multiply ${n1} × ${n2Str[1]}` });
             
-            let p2 = n1 * parseInt(n2Str[0]);
-            let p2Str = p2.toString();
-            table.rows[3].cells[w - 1].innerText = '0'; 
-            table.rows[3].cells[w - 1].className = "val-fixed";
+            let p2 = n1 * parseInt(n2Str[0]); let p2Str = p2.toString();
+            table.rows[3].cells[w - 1].innerText = '0'; table.rows[3].cells[w - 1].className = "val-fixed";
             for(let c=1; c<w; c++) table.rows[3].cells[c].className += " sub-line"; 
             
-            sequence.push({ type: 'input', row: 3, col: w - p2Str.length - 1, ans: p2Str, size: p2Str.length, dir: 'rtl', msg: `Step 2: Multiply ${n1} × ${n2Str[0]} (Zero is placed for you!)` });
-            
+            sequence.push({ type: 'input', row: 3, col: w - p2Str.length - 1, ans: p2Str, size: p2Str.length, dir: 'rtl', msg: `Step 2: Multiply ${n1} × ${n2Str[0]} (Zero placed!)` });
             sequence.push({ type: 'input', row: 4, col: w - ansStr.length, ans: ansStr, size: ansStr.length, dir: 'rtl', msg: `Step 3: Add them together!` });
             
             setupInputSequence(table, sequence);
@@ -251,36 +266,62 @@
                 if (seqIdx >= sequence.length) { handleProblemCompletion(); return; }
                 let step = sequence[seqIdx];
                 activeInputGroup = []; 
-                
                 if(step.msg) document.getElementById('feedback').innerText = step.msg;
 
                 if (step.type === 'input') {
                     let row = table.rows[step.row];
-                    
                     for (let i = 0; i < step.size; i++) {
-                        let cell = row.cells[step.col + i];
                         let input = document.createElement('input');
-                        input.type = 'text'; input.inputMode = 'numeric'; input.className = 'grid-input active'; input.maxLength = 1; 
+                        input.type = 'text'; input.inputMode = 'numeric'; input.className = 'grid-input active'; 
                         input.dataset.ans = step.ans[i]; 
-                        cell.appendChild(input);
+                        input.maxLength = 1;
+                        row.cells[step.col + i].appendChild(input);
                         activeInputGroup.push(input);
                     }
+                } else if (step.type === 'build-fraction') {
+                    // --- NEW FRACTION UI COMPONENT ---
+                    let fracContainer = document.createElement('div');
+                    fracContainer.style.marginTop = "20px";
+                    fracContainer.style.display = "flex";
+                    fracContainer.style.alignItems = "center";
+                    fracContainer.style.justifyContent = "center";
                     
+                    fracContainer.innerHTML = `
+                        <span style="font-size: 1.5rem; color: #4a5568; margin-right: 15px; font-weight: bold;">Mixed Fraction:</span>
+                        <input type="text" class="grid-input active" style="width: 50px; height: 50px; font-size: 2rem;" data-ans="${step.q}" maxlength="${step.q.length}">
+                        <div style="display: flex; flex-direction: column; align-items: center; margin-left: 10px;">
+                            <input type="text" class="grid-input active" style="width: 40px; margin-bottom: 2px;" data-ans="${step.r}" maxlength="${step.r.length}">
+                            <div style="border-top: 3px solid #2d3748; width: 100%; margin: 4px 0;"></div>
+                            <input type="text" class="grid-input active" style="width: 40px; margin-top: 2px;" data-ans="${step.d}" maxlength="${step.d.length}">
+                        </div>
+                    `;
+                    document.getElementById('grid-container').appendChild(fracContainer);
+                    
+                    document.getElementById('feedback').innerText = "Write the final answer as a mixed fraction!";
+                    document.getElementById('feedback').style.color = "var(--frac)";
+                    
+                    let inputs = fracContainer.querySelectorAll('input');
+                    inputs.forEach(inp => activeInputGroup.push(inp));
+                }
+
+                // Attach listeners to whatever inputs were generated
+                if (activeInputGroup.length > 0) {
                     activeInputGroup.forEach((inp, idx) => {
                         inp.addEventListener('input', () => {
                             inp.value = inp.value.replace(/[^0-9]/g, ''); 
                             
-                            if (inp.value.length === 1) {
+                            // Check if this specific box is full (1 digit for grid, up to 2 for fractions)
+                            if (inp.value.length === parseInt(inp.maxLength)) {
                                 if (step.dir === 'rtl' && idx > 0) activeInputGroup[idx-1].focus();
-                                else if (step.dir === 'ltr' && idx < activeInputGroup.length - 1) activeInputGroup[idx+1].focus();
+                                else if (step.dir !== 'rtl' && idx < activeInputGroup.length - 1) activeInputGroup[idx+1].focus();
                             }
                             
+                            // Check if ALL boxes in the step are correctly filled
                             let allFilled = true;
-                            activeInputGroup.forEach(i => { if(i.value === "") allFilled = false; });
-                            if (allFilled) checkActiveGroup();
+                            activeInputGroup.forEach(i => { if(i.value.length < i.dataset.ans.length) allFilled = false; });
+                            if (allFilled) checkActiveGroup(step.type);
                         });
                     });
-                    
                     if(step.dir === 'rtl') activeInputGroup[activeInputGroup.length - 1].focus();
                     else activeInputGroup[0].focus();
                 
@@ -296,7 +337,7 @@
                 }
             }
 
-            function checkActiveGroup() {
+            function checkActiveGroup(stepType) {
                 totalStepsTaken++;
                 let allCorrect = true;
                 activeInputGroup.forEach(inp => { if (inp.value !== inp.dataset.ans) allCorrect = false; });
@@ -305,11 +346,20 @@
                     document.getElementById('feedback').innerText = "Correct!";
                     document.getElementById('feedback').style.color = "var(--success)";
                     
-                    // THE FIX: Storing the parent cell memory before converting the input!
                     activeInputGroup.forEach(inp => {
-                        let cell = inp.parentElement; 
-                        cell.innerText = inp.value;
-                        cell.className += " val-fixed";
+                        if (stepType === 'build-fraction') {
+                            // Style the fraction inputs to look like plain text
+                            inp.disabled = true;
+                            inp.style.border = "none";
+                            inp.style.background = "transparent";
+                            inp.style.color = "#2d3748";
+                            inp.style.fontWeight = "bold";
+                        } else {
+                            // Standard grid conversion
+                            let cell = inp.parentElement; 
+                            cell.innerText = inp.value;
+                            cell.className += " val-fixed";
+                        }
                     });
                     
                     seqIdx++;
@@ -329,14 +379,17 @@
         }
 
         function handleProblemCompletion() {
-            let symbol = quizMode === 'div' ? '÷' : '×';
-            document.getElementById('feedback').innerText = `Finished! ${num1} ${symbol} ${num2} = ${finalAnswer} 🎉`;
+            let symbol = quizMode === 'mult' ? '×' : '÷';
+            let ansText = finalAnswer;
+            if (quizMode === 'div-frac') ansText = `${finalAnswer} and ${remainder}/${num2}`;
+            
+            document.getElementById('feedback').innerText = `Finished! ${num1} ${symbol} ${num2} = ${ansText} 🎉`;
             document.getElementById('feedback').style.color = "var(--success)";
             
             setTimeout(() => {
                 if (currentProblemNum >= maxProblems) showEndScreen();
                 else { currentProblemNum++; generateNewProblem(); }
-            }, 2500);
+            }, 3000);
         }
 
         function createRow(table, rowId, numCells) {
