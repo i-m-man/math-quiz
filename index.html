@@ -28,9 +28,16 @@
             bottom: 2px;
             font-size: 3rem;
             font-weight: bold;
-            color: #2d3748;
-            pointer-events: none; /* Allows clicking boxes underneath it */
+            color: var(--dec);
+            pointer-events: none; 
             z-index: 10;
+            animation: popIn 0.5s ease-out forwards;
+        }
+        
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            80% { transform: scale(1.3); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
         }
         
         /* Interactive Inputs */
@@ -63,7 +70,7 @@
         .grid-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
         
-        .val-fixed { color: #2d3748; font-weight: bold; }
+        .val-fixed { color: #2d3748; font-weight: bold; transition: 0.3s; }
         .rem-0 { color: var(--success); font-weight: bold; font-size: 2.8rem; }
         
         button { background: var(--primary); color: white; border: none; padding: 15px; font-size: 1.1rem; border-radius: 8px; cursor: pointer; margin-top: 10px; transition: 0.2s; font-weight: bold; box-sizing: border-box;}
@@ -177,25 +184,23 @@
                 setupMultiplicationGrid(num1, num2);
             } 
             else if (quizMode === 'div-dec') {
-                // To guarantee it ends in 1 or 2 decimal places, we must divide by 2, 4, or 5.
                 const allowedDivisors = [2, 4, 5];
                 num2 = allowedDivisors[Math.floor(Math.random() * allowedDivisors.length)];
                 
                 let multiplier = Math.floor(Math.random() * 80) + 11;
-                let rem = Math.floor(Math.random() * (num2 - 1)) + 1; // Forces uneven division
+                let rem = Math.floor(Math.random() * (num2 - 1)) + 1; 
                 
                 num1 = (num2 * multiplier) + rem; 
                 let actualAnswer = num1 / num2; 
                 let ansStr = actualAnswer.toString(); 
                 
-                // Figure out how many zeros to pad to the dividend grid visually
                 let decimalsNeeded = ansStr.includes('.') ? ansStr.split('.')[1].length : 0; 
                 let paddedDividend = num1.toString() + "0".repeat(decimalsNeeded);
                 
                 finalAnswer = actualAnswer;
                 setupDivisionGrid(paddedDividend, num2, false, decimalsNeeded);
             }
-            else { // Regular Division & Fractions
+            else { 
                 num2 = Math.floor(Math.random() * 8) + 2; 
                 finalAnswer = Math.floor(Math.random() * 80) + 11; 
                 remainder = (quizMode === 'div-frac') ? Math.floor(Math.random() * (num2 - 1)) + 1 : 0;
@@ -213,18 +218,16 @@
             divRowCells[0].innerText = div;
             divRowCells[0].className = "divisor";
             
-            // Decimal positioning logic
             let decIndex = decimalsNeeded > 0 ? dividendStr.length - decimalsNeeded - 1 : -1;
             
             for (let i = 0; i < dividendStr.length; i++) {
-                divRowCells[i+2].innerText = dividendStr[i];
-                divRowCells[i+2].className = "dividend-box val-fixed";
-                
-                // Paint the decimal points on the grid!
-                if (i === decIndex) {
-                    divRowCells[i+2].classList.add("has-decimal");
-                    table.rows[0].cells[2 + i].classList.add("has-decimal");
+                // THE FIX: Hide the trailing zeros initially!
+                if (i <= decIndex || decimalsNeeded === 0) {
+                    divRowCells[i+2].innerText = dividendStr[i];
+                } else {
+                    divRowCells[i+2].innerText = ""; 
                 }
+                divRowCells[i+2].className = "dividend-box val-fixed";
             }
             
             let sequence = [];
@@ -235,7 +238,6 @@
                 currValStr += dividendStr[i];
                 let currVal = parseInt(currValStr, 10);
                 
-                // PATCH: "sequence.length > 0" ensures middle zeros in quotients are processed properly!
                 if (currVal >= div || (i === dividendStr.length - 1) || sequence.length > 0) {
                     let q = Math.floor(currVal / div);
                     let qCol = startCol + i;
@@ -260,6 +262,15 @@
                     sequence.push({ type: 'input', row: remRowIndex, col: rStartCol, ans: rStr, size: rStr.length, dir: 'ltr' });
                     
                     if (i < dividendStr.length - 1) {
+                         // NEW LOGIC: Triggering the "Aha!" moment
+                         if (decimalsNeeded > 0) {
+                             if (i === decIndex) {
+                                 sequence.push({ type: 'reveal-decimal', decCol: 2 + i, nextZeroCol: 2 + i + 1 });
+                             } else if (i > decIndex) {
+                                 sequence.push({ type: 'reveal-zero', zeroCol: 2 + i + 1 });
+                             }
+                         }
+                         
                          sequence.push({ type: 'bringdown', row: remRowIndex, col: rStartCol + rStr.length, ans: dividendStr[i+1] });
                          currValStr = (rem === 0) ? "" : rem.toString();
                     } else {
@@ -347,6 +358,26 @@
                     
                     let inputs = fracContainer.querySelectorAll('input');
                     inputs.forEach(inp => activeInputGroup.push(inp));
+                    
+                } else if (step.type === 'reveal-decimal') {
+                    // THE MAGIC: Showing the decimal when they hit the remainder!
+                    table.rows[0].cells[step.decCol].classList.add("has-decimal");
+                    table.rows[1].cells[step.decCol].classList.add("has-decimal");
+                    table.rows[1].cells[step.nextZeroCol].innerText = "0"; // Reveal the zero
+                    
+                    document.getElementById('feedback').innerText = "We have a remainder! Add a decimal point and a zero.";
+                    document.getElementById('feedback').style.color = "var(--dec)";
+                    
+                    setTimeout(() => { seqIdx++; loadNextStep(); }, 2500);
+                    return; // Prevent normal focus logic from running
+                    
+                } else if (step.type === 'reveal-zero') {
+                    table.rows[1].cells[step.zeroCol].innerText = "0";
+                    document.getElementById('feedback').innerText = "Still a remainder! Add another zero.";
+                    document.getElementById('feedback').style.color = "var(--dec)";
+                    
+                    setTimeout(() => { seqIdx++; loadNextStep(); }, 2000);
+                    return;
                 }
 
                 if (activeInputGroup.length > 0) {
