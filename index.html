@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visual Math Mastery</title>
     <style>
-        :root { --primary: #4a90e2; --mult: #ed8936; --frac: #9f7aea; --success: #48bb78; --error: #f56565; --grid-line: #cbd5e0;}
+        :root { --primary: #4a90e2; --mult: #ed8936; --frac: #9f7aea; --dec: #319795; --success: #48bb78; --error: #f56565; --grid-line: #cbd5e0;}
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f7fafc; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
         
-        .card { background: white; padding: 2.5rem; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 100%; max-width: 600px; margin-bottom: 20px; box-sizing: border-box;}
+        .card { background: white; padding: 2.5rem; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 100%; max-width: 650px; margin-bottom: 20px; box-sizing: border-box;}
         
         /* Math Book Grid Styles */
         .math-grid { font-family: 'Courier New', Courier, monospace; font-size: 2.5rem; color: #2d3748; table-layout: fixed; border-collapse: collapse; margin: 30px auto; width: auto; }
@@ -18,6 +18,20 @@
         .divisor { border-right: 2px solid #2d3748; padding-right: 5px; color: #4a5568;}
         .dividend-box { border-bottom: 2px solid #2d3748;}
         .sub-line { border-bottom: 2px solid #2d3748;}
+        
+        /* Decimal Point Magic */
+        .has-decimal { position: relative; }
+        .has-decimal::after {
+            content: '.';
+            position: absolute;
+            right: -8px; 
+            bottom: 2px;
+            font-size: 3rem;
+            font-weight: bold;
+            color: #2d3748;
+            pointer-events: none; /* Allows clicking boxes underneath it */
+            z-index: 10;
+        }
         
         /* Interactive Inputs */
         .grid-input { 
@@ -41,6 +55,8 @@
         .mult-mode .grid-input.active { border-color: var(--mult); background: #fffaf0;}
         .frac-mode .grid-input:focus { outline: 2px solid var(--frac); background: #faf5ff;}
         .frac-mode .grid-input.active { border-color: var(--frac); background: #faf5ff;}
+        .dec-mode .grid-input:focus { outline: 2px solid var(--dec); background: #e6fffa;}
+        .dec-mode .grid-input.active { border-color: var(--dec); background: #e6fffa;}
         
         /* Hide Arrows on inputs */
         .grid-input::-webkit-outer-spin-button,
@@ -50,11 +66,14 @@
         .val-fixed { color: #2d3748; font-weight: bold; }
         .rem-0 { color: var(--success); font-weight: bold; font-size: 2.8rem; }
         
-        button { background: var(--primary); color: white; border: none; padding: 15px 20px; font-size: 1.1rem; border-radius: 8px; cursor: pointer; margin-top: 15px; transition: 0.2s; font-weight: bold;}
+        button { background: var(--primary); color: white; border: none; padding: 15px; font-size: 1.1rem; border-radius: 8px; cursor: pointer; margin-top: 10px; transition: 0.2s; font-weight: bold; box-sizing: border-box;}
         button:hover { opacity: 0.9; transform: translateY(-2px); }
+        
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px;}
         .btn-mult { background: var(--mult); }
-        .btn-frac { background: var(--frac); width: 100%; margin-top: 5px;}
-        .save-btn { background: var(--success); font-size: 1.3rem; padding: 15px; width: 100%; margin-top: 0;}
+        .btn-frac { background: var(--frac); }
+        .btn-dec { background: var(--dec); }
+        .save-btn { background: var(--success); font-size: 1.3rem; width: 100%; margin-top: 0;}
         
         .stats { display: flex; justify-content: space-between; background: #edf2f7; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-weight: bold; color: #4a5568;}
     </style>
@@ -63,13 +82,14 @@
 
     <div class="card" id="setup-screen">
         <h2>Visual Math Mastery</h2>
-        <p>Enter your name and select your challenge! <br><br><i>Note: You are being timed!</i> ⏱️</p>
-        <input type="text" id="student-name" placeholder="Your Name" style="font-size: 1.3rem; padding: 10px; border-radius: 8px; border: 2px solid #e2e8f0; width: 80%; margin-bottom: 20px;" autofocus>
+        <p>Enter your name and select your module! <br><br><i>Note: You are being timed!</i> ⏱️</p>
+        <input type="text" id="student-name" placeholder="Your Name" style="font-size: 1.3rem; padding: 10px; border-radius: 8px; border: 2px solid #e2e8f0; width: 80%; text-align: center;" autofocus>
         
-        <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
-            <button class="btn-mult" onclick="startQuiz('mult')" style="width: 45%;">✖️ Multiplication</button>
-            <button onclick="startQuiz('div')" style="width: 45%;">➗ Division</button>
-            <button class="btn-frac" onclick="startQuiz('div-frac')">➗ Division (Mixed Fractions)</button>
+        <div class="btn-grid">
+            <button class="btn-mult" onclick="startQuiz('mult')">✖️ Multiplication</button>
+            <button onclick="startQuiz('div')">➗ Division (Even)</button>
+            <button class="btn-frac" onclick="startQuiz('div-frac')">➗ Division (Fractions)</button>
+            <button class="btn-dec" onclick="startQuiz('div-dec')">➗ Division (Decimals)</button>
         </div>
     </div>
 
@@ -119,7 +139,7 @@
             document.getElementById('quiz-screen').style.display = 'block';
             
             const grid = document.getElementById('main-grid');
-            grid.className = "math-grid"; // Reset classes
+            grid.className = "math-grid"; 
             
             if (mode === 'mult') {
                 document.getElementById('quiz-title').innerText = "Multiplication";
@@ -127,6 +147,9 @@
             } else if (mode === 'div-frac') {
                 document.getElementById('quiz-title').innerText = "Mixed Fractions";
                 grid.classList.add('frac-mode');
+            } else if (mode === 'div-dec') {
+                document.getElementById('quiz-title').innerText = "Decimal Division";
+                grid.classList.add('dec-mode');
             } else {
                 document.getElementById('quiz-title').innerText = "Long Division";
             }
@@ -140,34 +163,48 @@
             activeInputGroup = [];
             document.getElementById('stat-problem').innerText = `${currentProblemNum} / ${maxProblems}`;
             document.getElementById('feedback').innerText = "";
-            document.getElementById('grid-container').innerHTML = '<table class="math-grid" id="main-grid"></table>'; // Reset completely
+            document.getElementById('grid-container').innerHTML = '<table class="math-grid" id="main-grid"></table>'; 
             
             const grid = document.getElementById('main-grid');
             if (quizMode === 'mult') grid.classList.add('mult-mode');
             if (quizMode === 'div-frac') grid.classList.add('frac-mode');
+            if (quizMode === 'div-dec') grid.classList.add('dec-mode');
 
-            if (quizMode === 'div' || quizMode === 'div-frac') {
-                num2 = Math.floor(Math.random() * 8) + 2; // Divisor (2-9)
-                finalAnswer = Math.floor(Math.random() * 80) + 11; // Quotient (11-90)
-                
-                if (quizMode === 'div-frac') {
-                    // Force a remainder between 1 and (divisor - 1)
-                    remainder = Math.floor(Math.random() * (num2 - 1)) + 1;
-                } else {
-                    remainder = 0;
-                }
-                
-                num1 = (num2 * finalAnswer) + remainder; // Calculate dividend
-                setupDivisionGrid(num1.toString(), num2, quizMode === 'div-frac');
-            } else {
+            if (quizMode === 'mult') {
                 num1 = Math.floor(Math.random() * 900) + 100; 
                 num2 = (Math.floor(Math.random() * 9) + 1) * 10 + (Math.floor(Math.random() * 9) + 1); 
                 finalAnswer = num1 * num2;
                 setupMultiplicationGrid(num1, num2);
+            } 
+            else if (quizMode === 'div-dec') {
+                // To guarantee it ends in 1 or 2 decimal places, we must divide by 2, 4, or 5.
+                const allowedDivisors = [2, 4, 5];
+                num2 = allowedDivisors[Math.floor(Math.random() * allowedDivisors.length)];
+                
+                let multiplier = Math.floor(Math.random() * 80) + 11;
+                let rem = Math.floor(Math.random() * (num2 - 1)) + 1; // Forces uneven division
+                
+                num1 = (num2 * multiplier) + rem; 
+                let actualAnswer = num1 / num2; 
+                let ansStr = actualAnswer.toString(); 
+                
+                // Figure out how many zeros to pad to the dividend grid visually
+                let decimalsNeeded = ansStr.includes('.') ? ansStr.split('.')[1].length : 0; 
+                let paddedDividend = num1.toString() + "0".repeat(decimalsNeeded);
+                
+                finalAnswer = actualAnswer;
+                setupDivisionGrid(paddedDividend, num2, false, decimalsNeeded);
+            }
+            else { // Regular Division & Fractions
+                num2 = Math.floor(Math.random() * 8) + 2; 
+                finalAnswer = Math.floor(Math.random() * 80) + 11; 
+                remainder = (quizMode === 'div-frac') ? Math.floor(Math.random() * (num2 - 1)) + 1 : 0;
+                num1 = (num2 * finalAnswer) + remainder; 
+                setupDivisionGrid(num1.toString(), num2, quizMode === 'div-frac', 0);
             }
         }
 
-        function setupDivisionGrid(dividendStr, div, isFracMode) {
+        function setupDivisionGrid(dividendStr, div, isFracMode, decimalsNeeded) {
             const table = document.getElementById('main-grid');
             createRow(table, 'ans-row', dividendStr.length + 2); 
             createRow(table, 'div-row', dividendStr.length + 2); 
@@ -176,9 +213,18 @@
             divRowCells[0].innerText = div;
             divRowCells[0].className = "divisor";
             
+            // Decimal positioning logic
+            let decIndex = decimalsNeeded > 0 ? dividendStr.length - decimalsNeeded - 1 : -1;
+            
             for (let i = 0; i < dividendStr.length; i++) {
                 divRowCells[i+2].innerText = dividendStr[i];
                 divRowCells[i+2].className = "dividend-box val-fixed";
+                
+                // Paint the decimal points on the grid!
+                if (i === decIndex) {
+                    divRowCells[i+2].classList.add("has-decimal");
+                    table.rows[0].cells[2 + i].classList.add("has-decimal");
+                }
             }
             
             let sequence = [];
@@ -189,7 +235,8 @@
                 currValStr += dividendStr[i];
                 let currVal = parseInt(currValStr, 10);
                 
-                if (currVal >= div || (i === dividendStr.length - 1)) {
+                // PATCH: "sequence.length > 0" ensures middle zeros in quotients are processed properly!
+                if (currVal >= div || (i === dividendStr.length - 1) || sequence.length > 0) {
                     let q = Math.floor(currVal / div);
                     let qCol = startCol + i;
                     sequence.push({ type: 'input', row: 0, col: qCol, ans: q.toString(), size: 1, dir: 'ltr' });
@@ -279,7 +326,6 @@
                         activeInputGroup.push(input);
                     }
                 } else if (step.type === 'build-fraction') {
-                    // --- NEW FRACTION UI COMPONENT ---
                     let fracContainer = document.createElement('div');
                     fracContainer.style.marginTop = "20px";
                     fracContainer.style.display = "flex";
@@ -296,7 +342,6 @@
                         </div>
                     `;
                     document.getElementById('grid-container').appendChild(fracContainer);
-                    
                     document.getElementById('feedback').innerText = "Write the final answer as a mixed fraction!";
                     document.getElementById('feedback').style.color = "var(--frac)";
                     
@@ -304,19 +349,14 @@
                     inputs.forEach(inp => activeInputGroup.push(inp));
                 }
 
-                // Attach listeners to whatever inputs were generated
                 if (activeInputGroup.length > 0) {
                     activeInputGroup.forEach((inp, idx) => {
                         inp.addEventListener('input', () => {
                             inp.value = inp.value.replace(/[^0-9]/g, ''); 
-                            
-                            // Check if this specific box is full (1 digit for grid, up to 2 for fractions)
                             if (inp.value.length === parseInt(inp.maxLength)) {
                                 if (step.dir === 'rtl' && idx > 0) activeInputGroup[idx-1].focus();
                                 else if (step.dir !== 'rtl' && idx < activeInputGroup.length - 1) activeInputGroup[idx+1].focus();
                             }
-                            
-                            // Check if ALL boxes in the step are correctly filled
                             let allFilled = true;
                             activeInputGroup.forEach(i => { if(i.value.length < i.dataset.ans.length) allFilled = false; });
                             if (allFilled) checkActiveGroup(step.type);
@@ -348,14 +388,10 @@
                     
                     activeInputGroup.forEach(inp => {
                         if (stepType === 'build-fraction') {
-                            // Style the fraction inputs to look like plain text
                             inp.disabled = true;
-                            inp.style.border = "none";
-                            inp.style.background = "transparent";
-                            inp.style.color = "#2d3748";
-                            inp.style.fontWeight = "bold";
+                            inp.style.border = "none"; inp.style.background = "transparent";
+                            inp.style.color = "#2d3748"; inp.style.fontWeight = "bold";
                         } else {
-                            // Standard grid conversion
                             let cell = inp.parentElement; 
                             cell.innerText = inp.value;
                             cell.className += " val-fixed";
